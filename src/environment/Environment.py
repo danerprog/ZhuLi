@@ -11,8 +11,8 @@ class Environment:
     
     def __init__(self):
         self._initializeConfigurationManager()
-        self._initializeEventListenerManager()
         self._initializeLoggingManager()
+        self._initializeEventListenerManager()
 
     def configuration(self):
         return self._configuration_manager
@@ -20,7 +20,7 @@ class Environment:
     def logger(self):
         return self._logging_manager
 
-    def getLogger(self, name):
+    def getLogger(self, name = None):
         return self._logging_manager.getLogger(name)
         
     def getConfiguration(self, name):
@@ -38,6 +38,7 @@ class Environment:
         
     def _initializeEventListenerManager(self):
         self._event_listener_manager = EventListenerManager.instance()
+        self._event_listener_manager.setLogger(self.getLogger("EventListenerManager"))
         
     def _initializeLoggingManager(self):
         app_name = self.configuration().getConfiguration("main").get(

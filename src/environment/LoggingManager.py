@@ -19,8 +19,11 @@ class LoggingManager:
         self._initializeRootLogger()
         self._initializeMainLogger()
         
-    def getLogger(self, name):
-        return self._main_logger.getChild(name)
+    def getLogger(self, name = None):
+        logger_to_return = self._main_logger
+        if name is not None:
+            logger_to_return = logger_to_return.getChild(name)
+        return logger_to_return
         
     def hideLogger(self, name):
         logging.getLogger(name).setLevel(logging.ERROR)
