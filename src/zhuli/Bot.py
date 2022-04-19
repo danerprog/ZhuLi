@@ -54,10 +54,10 @@ class Bot:
             uptime = datetime.now() - self._timestamp_started
             total_seconds = uptime.total_seconds()
             self._logger.debug("getTimestampUptime called. total_seconds: " + str(total_seconds))
-            timestamp_in_string = "{}:{}:{}".format(
-                str(total_seconds // 3600),
-                str(total_seconds % 3600 // 60),
-                str(total_seconds % 60 // 1)
+            timestamp_in_string = "{:02d}:{:02d}:{:02d}".format(
+                int(total_seconds // 3600),
+                int(total_seconds % 3600 // 60),
+                int(total_seconds % 60 // 1)
             )
         return timestamp_in_string
         
