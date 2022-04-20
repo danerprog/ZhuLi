@@ -2,13 +2,13 @@ from environment.Environment import Environment
 from discordinterface.DiscordInterface import DiscordInterface
 from zhuli.ZhuLi import ZhuLi
 
-import asyncio
+import sys
 
 
 class Main:
 
-    def __init__(self):
-        self._environment = Environment.instance();
+    def __init__(self, config_directory):
+        self._environment = Environment.instance(config_directory);
         self._zhu_li = ZhuLi()
         self._initializeLoggers()
         
@@ -24,5 +24,5 @@ class Main:
 
 
 if __name__ == "__main__":
-    main = Main()
+    main = Main(sys.argv[1])
     main.run()
