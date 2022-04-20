@@ -96,9 +96,7 @@ class ZhuLi:
 
     def _initializeBots(self):
         self._logger.info("initializing bots...")
-        batch_file_directory = self._environment.getConfiguration("main").get(
-            "App", "BatchFileDirectory"
-        )
+        batch_file_directory = self._environment.configuration()["main"]["App"]["batchfiledirectory"]
         for filename in os.listdir(batch_file_directory):
             if filename.endswith(".bat"):
                 self._initializeBot(batch_file_directory, filename)

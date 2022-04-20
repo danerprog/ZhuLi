@@ -41,7 +41,7 @@ class Environment:
     
     def _initializeDatabaseManager(self):
         self._database_manager = DatabaseManager(
-            self.configuration().getConfiguration("main").get("App", "DatabasePort"),
+            self.configuration()["main"]["App"]["databaseport"],
             self.getLogger("DatabaseManager")
         )
         
@@ -50,10 +50,10 @@ class Environment:
         self._event_listener_manager.setLogger(self.getLogger("EventListenerManager"))
         
     def _initializeLoggingManager(self):
-        configuration = self.configuration().getConfiguration("main")
+        main_configuration = self.configuration()["main"]
         self._logging_manager = LoggingManager(
-            logs_directory = configuration.get("App", "LogFileDirectory"),
-            main_logger_name = configuration.get("App", "Name"))
+            logs_directory = main_configuration["App"]["logfiledirectory"],
+            main_logger_name = main_configuration["App"]["name"])
         self._logging_manager.initialize()
         
     def instance(config_directory = None):

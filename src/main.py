@@ -15,7 +15,7 @@ class Main:
     def run(self):
         self._logger.debug("run called")
         discord_interface = DiscordInterface()
-        discord_interface.run(self._environment.getConfiguration("main").get("Discord", "Token"))
+        discord_interface.run(self._environment.configuration()["main"]["Discord"]["token"])
     
     def _initializeLoggers(self):
         logging_manager = Environment.instance().logger()
