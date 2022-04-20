@@ -1,6 +1,0 @@
-*.bat
-bats/
-configs/
-env/
-logs/
-**/__pycache__/**
