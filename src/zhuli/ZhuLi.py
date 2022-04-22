@@ -15,45 +15,73 @@ class ZhuLi:
     def start(self, *args, **kwargs):
         self._logger.info("start called. kwargs: " + str(kwargs))
         bot_name = kwargs["bot_name"]
+        message = {"title" : "start"}
+        
         for bot in self._bots:
             if bot_name == bot.getName():
-                bot.start()
+                result = bot.start()
+                if result:
+                    message["description"] = bot_name + " was successfully started."
+                    message["level"] = "info"
+                else:
+                    message["description"] = bot_name + " is already running!"
+                    message["level"] = "warning"
+                    
+        self._sendMessage(message, **kwargs)
     
     def stop(self, *args, **kwargs):
         self._logger.info("stop called. kwargs: " + str(kwargs))
         bot_name = kwargs["bot_name"]
+        message = {"title" : "stop"}
+        
         for bot in self._bots:
             if bot_name == bot.getName():
-                bot.stop()
+                result = bot.stop()
+                
+                if result:
+                    message["description"] = bot_name + " was successfully stopped."
+                    message["level"] = "info"
+                else:
+                    message["description"] = bot_name + " is not running!"
+                    message["level"] = "warning"
+                    
+        self._sendMessage(message, **kwargs)
     
     def restart(self, *args, **kwargs):
         self._logger.info("restart called. kwargs: " + str(kwargs))
         bot_name = kwargs["bot_name"]
+        message = {"title" : "restart"}
+        
         for bot in self._bots:
             if bot_name == bot.getName():
-                bot.restart()
+                result = bot.restart()
+                
+                if result:
+                    message["description"] = bot_name + " was successfully restarted."
+                    message["level"] = "info"
+                else:
+                    message["description"] = "Unable to restart {}!".format(bot_name)
+                    message["level"] = "warning"
+                    
+        self._sendMessage(message, **kwargs)
     
     def status(self, *args, **in_kwargs):
         self._logger.info("status called. kwargs: " + str(in_kwargs))
         bot_name = in_kwargs["bot_name"]
-        out_kwargs = {
-            "channel_id" : in_kwargs["channel_id"]
-        }
-        self._sendStatusMessages(bot_name, out_kwargs)
+        self._sendStatusMessages(bot_name, in_kwargs)
         
-        
-    def _sendStatusMessages(self, bot_name, out_kwargs):
+    def _sendStatusMessages(self, bot_name, in_kwargs):
         if bot_name is None:
-            self._sendOwnStatusMessage(out_kwargs)
+            self._sendOwnStatusMessage(in_kwargs)
         else:
             for bot in self._bots:
                 if bot.getName() == bot_name:
-                    self._sendBotStatusMessage(bot, out_kwargs)
+                    self._sendBotStatusMessage(bot, in_kwargs)
                     
-    def _sendOwnStatusMessage(self, out_kwargs):
+    def _sendOwnStatusMessage(self, in_kwargs):
         message = {}
         message["title"] = "status"
-        message["description"] = "Zhu Li"
+        message["description"] = self._environment.getConfiguration("main")["App"]["name"]
         message["fields"] = []
         message_field_value = ""
         for bot in self._bots:
@@ -66,10 +94,10 @@ class ZhuLi:
             "value" : message_field_value,
             "inline" : False
         })
-        out_kwargs["message"] = message
-        self._environment.fireEvent("send", **out_kwargs)
+        message["level"] = "info"
+        self._sendMessage(message, **in_kwargs)
         
-    def _sendBotStatusMessage(self, bot, out_kwargs):
+    def _sendBotStatusMessage(self, bot, in_kwargs):
         isBotRunning = bot.isRunning()
         message = {}
         message["title"] = "status"
@@ -91,6 +119,10 @@ class ZhuLi:
                 "value" : bot.getTimestampUptime(),
                 "inline" : False
             })
+        message["level"] = "info"
+        self._sendMessage(message, **in_kwargs)
+        
+    def _sendMessage(self, message, **out_kwargs):
         out_kwargs["message"] = message
         self._environment.fireEvent("send", **out_kwargs)
 

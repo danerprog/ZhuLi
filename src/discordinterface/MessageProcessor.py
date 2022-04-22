@@ -16,7 +16,8 @@ class MessageProcessor:
         def raw(self):
             return self._message
 
-    def __init__(self, logger):
+    def __init__(self, own_id, logger):
+        self._own_id = own_id
         self._logger = logger
         self._environment = Environment.instance()
         self._discord_configuration = self._environment.configuration()["main"]["Discord"]
@@ -28,7 +29,7 @@ class MessageProcessor:
         self._logger.debug("initialized. command_character: " + self._command_character)
         
     def process(self, message):
-        self._logger.debug("process called")
+        self._logger.debug("process called. message.content: " + message.content)
         preprocessed_message = MessageProcessor.PreprocessedMessage(message)
         if self._shouldMessageBeProcessed(preprocessed_message):
             self._logger.debug("processing message")
@@ -37,14 +38,20 @@ class MessageProcessor:
             self._logger.debug("ignoring message")
         
     def _shouldMessageBeProcessed(self, preprocessed_message):
+        result = False
         first_token = preprocessed_message.token(0)
-        isFirstTokenACommandForThisBot = first_token[0] == self._command_character
-        doesSenderHavePermissionsToTriggerEvent = self._doesSenderHavePermissionsToTriggerEvent(preprocessed_message)
-        self._logger.debug("_shouldMessageBeProcessed called. isFirstTokenACommandForThisBot: {}, doesSenderHavePermissionsToTriggerEvent: {}".format(
-            str(isFirstTokenACommandForThisBot),
-            str(doesSenderHavePermissionsToTriggerEvent)
-        ))
-        return isFirstTokenACommandForThisBot and doesSenderHavePermissionsToTriggerEvent
+        debug_message = "_shouldMessageBeProcessed called. "
+        isMessageSentBySelf = self._own_id == preprocessed_message.raw().author.id
+        debug_message += "isMessageSentBySelf: {} ".format(str(isMessageSentBySelf))
+        if not isMessageSentBySelf:
+            isFirstTokenACommandForThisBot = False if len(first_token) <= 0 else first_token[0] == self._command_character
+            debug_message += ", isFirstTokenACommandForThisBot: {} ".format(str(isFirstTokenACommandForThisBot))
+            if isFirstTokenACommandForThisBot:
+                doesSenderHavePermissionsToTriggerEvent = False if first_token is None else self._doesSenderHavePermissionsToTriggerEvent(preprocessed_message)
+                debug_message += ", doesSenderHavePermissionsToTriggerEvent: {} ".format(str(doesSenderHavePermissionsToTriggerEvent))
+                result = True
+        self._logger.debug(debug_message)
+        return result
         
     def _doesSenderHavePermissionsToTriggerEvent(self, preprocessed_message):
         event = preprocessed_message.token(0)[1:]

@@ -33,8 +33,10 @@ class Bot:
 
     def restart(self):
         self._logger.info("restarting...")
-        self.stop()
-        self.start()
+        result = self.stop()
+        if result:
+            result = self.start()
+        return result
         
     def isRunning(self):
         self._logger.debug("isRunning called.")
@@ -68,7 +70,7 @@ class Bot:
             self._runBatchFile()
         else:
             self._logger.warning("i am currently running!")
-        return isBotCurrentlyRunning
+        return not isBotCurrentlyRunning
 
     def _runBatchFile(self):
         self._logger.info("starting batch file: " + self._batch_file)
