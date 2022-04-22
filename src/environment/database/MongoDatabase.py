@@ -36,7 +36,7 @@ class MongoDatabase:
 
     def __init__(self, name, port, logger):
         self._logger = logger
-        self._database = MongoClient('localhost', 27107 if port == 27107 else 27108)
+        self._database = MongoClient('localhost', port)
         self._main_slice = MongoDatabase.Slice(self._database[name], self._logger.getChild("Slice"))
         self._logger.debug("initialized")
 
