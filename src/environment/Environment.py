@@ -20,6 +20,9 @@ class Environment:
     def configuration(self):
         return self._configuration_manager
         
+    def database(self):
+        return self._database_manager.get()
+        
     def logger(self):
         return self._logging_manager
 
@@ -40,9 +43,16 @@ class Environment:
         self._configuration_manager.parseFile("main")
     
     def _initializeDatabaseManager(self):
+        main_configuration = self.configuration()["main"]["App"]
+        kwargs = {
+            'mongo' : {
+                'name' : main_configuration["name"],
+                'port' : int(main_configuration["databaseport"]),
+            }
+        }
         self._database_manager = DatabaseManager(
-            self.configuration()["main"]["App"]["databaseport"],
-            self.getLogger("DatabaseManager")
+            self.getLogger("DatabaseManager"),
+            **kwargs
         )
         
     def _initializeEventListenerManager(self):
@@ -50,10 +60,10 @@ class Environment:
         self._event_listener_manager.setLogger(self.getLogger("EventListenerManager"))
         
     def _initializeLoggingManager(self):
-        main_configuration = self.configuration()["main"]
+        main_configuration = self.configuration()["main"]["App"]
         self._logging_manager = LoggingManager(
-            logs_directory = main_configuration["App"]["logfiledirectory"],
-            main_logger_name = main_configuration["App"]["name"])
+            logs_directory = main_configuration["logfiledirectory"],
+            main_logger_name = main_configuration["name"])
         self._logging_manager.initialize()
         
     def instance(config_directory = None):
