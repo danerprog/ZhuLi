@@ -8,21 +8,34 @@ class PermissionsManager:
         self._logger.info("initialized")
         
     def addEventPermissionsForGroup(self, event, id):
-        self._logger.debug("addEventPermissionsForGroup called. event: {}, id: {}".format(
-            event,
-            str(id)
-        ))
-        self._database[event]['group'].insert(
-            {'id' : id}
-        )
+        self._logger.debug(f"addEventPermissionsForGroup called. event: {event}, id: {id}")
+        if not self.doesGroupIdHavePermissionsForEvent(event, id):
+            self._database[event]['group'].insert({'id' : id})
+        else:
+            self._logger.debug(f"group {id} already has permissions. ignoring request.")
         
     def doesGroupIdHavePermissionsForEvent(self, event, id):
-        result = self._database[event]['group'].count(
-            {'id' : id}
-        )
-        self._logger.debug("doesGroupIdHavePermissionsForEvent called. event: {}, id: {}, result: {}".format(
-            event,
-            str(id),
-            str(result)
-        ))
-        return result > 0
+        result = self._isEventTriggerableByAUser(event)
+        if result:
+            count = self._database[event]['group'].count({'id' : id})
+            result = count > 0
+        self._logger.debug(f"doesGroupIdHavePermissionsForEvent called. event: {event}, id: {id}, result: {result}")
+        return result
+        
+    def addEventPermissionsForUser(self, event, id):
+        self._logger.debug(f"addEventPermissionsForUser called. event: {event}, id: {id}")
+        if not self.doesGroupIdHavePermissionsForEvent(event, id):
+            self._database[event]['user'].insert({'id' : id})
+        else:
+            self._logger.debug(f"user {id} already has permissions. ignoring request.")
+
+    def doesUserIdHavePermissionsForEvent(self, event, id):
+        result = self._isEventTriggerableByAUser(event)
+        if result:
+            count = self._database[event]['user'].count({'id' : id})
+            result = count > 0
+        self._logger.debug(f"doesUserIdHavePermissionsForEvent called. event: {event}, id: {id}, result: {result}")
+        return result
+        
+    def _isEventTriggerableByAUser(self, event):
+        return event == "start" or event == "stop" or event == "restart" or event == "status"

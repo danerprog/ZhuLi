@@ -1,4 +1,3 @@
-from .PermissionsManager import PermissionsManager
 from environment.Environment import Environment
 
 
@@ -16,16 +15,12 @@ class MessageProcessor:
         def raw(self):
             return self._message
 
-    def __init__(self, own_id, logger):
-        self._own_id = own_id
+    def __init__(self, permissions_manager, logger):
+        self._permissions_manager = permissions_manager
         self._logger = logger
         self._environment = Environment.instance()
         self._discord_configuration = self._environment.configuration()["main"]["Discord"]
         self._command_character = self._discord_configuration["commandcharacter"]
-        self._permissions_manager = PermissionsManager(
-            self._environment.database()['discordinterface']['permissions'],
-            self._logger.getChild("PermissionsManager")
-        )
         self._logger.debug("initialized. command_character: " + self._command_character)
         
     def process(self, message):
@@ -41,33 +36,27 @@ class MessageProcessor:
         result = False
         first_token = preprocessed_message.token(0)
         debug_message = "_shouldMessageBeProcessed called. "
-        isMessageSentBySelf = self._own_id == preprocessed_message.raw().author.id
-        debug_message += "isMessageSentBySelf: {} ".format(str(isMessageSentBySelf))
-        if not isMessageSentBySelf:
-            isFirstTokenACommandForThisBot = False if len(first_token) <= 0 else first_token[0] == self._command_character
-            debug_message += ", isFirstTokenACommandForThisBot: {} ".format(str(isFirstTokenACommandForThisBot))
-            if isFirstTokenACommandForThisBot:
-                doesSenderHavePermissionsToTriggerEvent = False if first_token is None else self._doesSenderHavePermissionsToTriggerEvent(preprocessed_message)
-                debug_message += ", doesSenderHavePermissionsToTriggerEvent: {} ".format(str(doesSenderHavePermissionsToTriggerEvent))
-                result = True
+        isFirstTokenACommandForThisBot = False if len(first_token) <= 0 else first_token[0] == self._command_character
+        debug_message += f", isFirstTokenACommandForThisBot: {isFirstTokenACommandForThisBot} "
+        if isFirstTokenACommandForThisBot:
+            doesSenderHavePermissionsToTriggerEvent = False if first_token is None else self._doesSenderHavePermissionsToTriggerEvent(preprocessed_message)
+            debug_message += f"doesSenderHavePermissionsToTriggerEvent: {doesSenderHavePermissionsToTriggerEvent} "
+            result = doesSenderHavePermissionsToTriggerEvent
         self._logger.debug(debug_message)
         return result
         
     def _doesSenderHavePermissionsToTriggerEvent(self, preprocessed_message):
         event = preprocessed_message.token(0)[1:]
         raw_message = preprocessed_message.raw()
-        user_id = raw_message.author.id
-        top_role_id = raw_message.author.top_role.id
-        isSenderTheOwner = user_id == int(self._discord_configuration["ownerid"])
-        doesSenderHavePermissionsToTriggerEvent = self._permissions_manager.doesGroupIdHavePermissionsForEvent(event, top_role_id)
-        self._logger.debug("_doesSenderHavePermissionsToTriggerEvent called. user_id: {}, top_role_id: {}, isSenderTheOwner: {}, doesSenderHavePermissionsToTriggerEvent: {}".format(
-            str(user_id),
-            str(top_role_id),
-            str(isSenderTheOwner),
-            str(doesSenderHavePermissionsToTriggerEvent)
-        ))
-        return isSenderTheOwner or doesSenderHavePermissionsToTriggerEvent
-        
+        doesSenderHavePermissionsToTriggerEventAsAUser = self._permissions_manager.doesUserIdHavePermissionsForEvent(event, raw_message.author.id)
+        doesSenderHavePermissionsToTriggerEventAsAGroupMember = self._permissions_manager.doesGroupIdHavePermissionsForEvent(event, raw_message.author.top_role.id)
+        self._logger.debug(f"_doesSenderHavePermissionsToTriggerEvent called. " + 
+            f"event: {event}, " + 
+            f"raw_message: {raw_message}, " +
+            f"doesSenderHavePermissionsToTriggerEventAsAUser: {doesSenderHavePermissionsToTriggerEventAsAUser}, " +
+            f"doesSenderHavePermissionsToTriggerEventAsAGroupMember: {doesSenderHavePermissionsToTriggerEventAsAGroupMember}")
+        return doesSenderHavePermissionsToTriggerEventAsAUser or doesSenderHavePermissionsToTriggerEventAsAGroupMember
+  
     def _processMessage(self, preprocessed_message):
         self._logger.debug("_processMessage called")
         
