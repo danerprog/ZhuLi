@@ -56,11 +56,10 @@ class Environment:
         self._event_listener_manager.setLogger(self.getLogger("EventListenerManager"))
         
     def _initializeLoggingManager(self):
-        app_configuration = self.configuration()["main"]["App"]
+        main_configuration = self.configuration()["main"]
         self._logging_manager = LoggingManager(
-            logs_directory = app_configuration["logfiledirectory"],
-            main_logger_name = app_configuration["name"])
-        self._logging_manager.initialize()
+            logger_configuration = main_configuration["Logger"],
+            main_logger_name = main_configuration["App"]["name"])
         
     def instance(config_directory = None):
         if Environment.INSTANCE is None:
