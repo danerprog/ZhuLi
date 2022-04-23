@@ -1,9 +1,11 @@
+from .Database import Database
+
 from pymongo import MongoClient
 
 
-class MongoDatabase:
+class MongoDatabase(Database):
 
-    class Slice:
+    class Slice(Database.Slice):
         def __init__(self, database, logger):
             self._logger = logger
             self._database = database
@@ -34,21 +36,9 @@ class MongoDatabase:
             self._database.insert_one(value)
         
 
-    def __init__(self, name, port, logger):
-        self._logger = logger
-        self._database = MongoClient('localhost', port)
-        self._main_slice = MongoDatabase.Slice(self._database[name], self._logger.getChild("Slice"))
+    def __init__(self, **params):
+        self._database = MongoClient('localhost', params["port"])
+        super().__init__(
+            MongoDatabase.Slice(self._database[params["name"]], params["logger"].getChild("Slice")), 
+            **params)
         self._logger.debug("initialized")
-
-    def __getitem__(self, key):
-        return self._main_slice[key]
-        
-    def count(self, mapping):
-        return self._main_slice.count(mapping)
-        
-    def insert(self, mapping):
-        return self._main_slice.insert(mapping)
-
-
-        
-        
