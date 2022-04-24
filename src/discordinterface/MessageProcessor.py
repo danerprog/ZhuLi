@@ -1,3 +1,4 @@
+from .AddEventProcessor import AddEventProcessor
 from environment.Environment import Environment
 
 
@@ -59,17 +60,28 @@ class MessageProcessor:
   
     def _processMessage(self, preprocessed_message):
         self._logger.debug("_processMessage called")
-        
         event = preprocessed_message.token(0).replace(self._command_character, "", 1)
-        kwargs = {
+        self._processEvent(event, preprocessed_message)
+  
+    def _processEvent(self, event, preprocessed_message):
+        if event == "add":
+            AddEventProcessor(**{
+                "environment" : self._environment,
+                "logger" : self._logger.getChild("AddEventProcessor"),
+                "preprocessed_message" : preprocessed_message,
+                "permissions_manager" : self._permissions_manager,
+            })
+        else:
+            self._fireEvent(event, preprocessed_message)
+    
+    def _fireEvent(self, event, preprocessed_message):
+        params = {
             "bot_name" : preprocessed_message.token(1),
             "channel_id" : str(preprocessed_message.raw().channel.id)
         }
         
-        self._logger.info("firing event {}. kwargs: {}".format(
-            event,
-            str(kwargs)
-        ))
-        self._environment.fireEvent(event, **kwargs)
+        self._logger.info(f"firing event {event}. params: {params}")
+        self._environment.fireEvent(event, **params)
+  
         
         

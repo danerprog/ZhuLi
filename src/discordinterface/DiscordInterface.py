@@ -53,6 +53,8 @@ class DiscordInterface(discord.Client):
         self._permissions_manager.addEventPermissionsForUser('stop', id)
         self._permissions_manager.addEventPermissionsForUser('restart', id)
         self._permissions_manager.addEventPermissionsForUser('status', id)
+        self._permissions_manager.addEventPermissionsForUser('add', id)
+        self._permissions_manager.addEventPermissionsForUser('remove', id)
 
     def _convertToEmbed(self, message):
         embed = discord.Embed()

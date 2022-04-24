@@ -32,10 +32,11 @@ class PermissionsManager:
     def doesUserIdHavePermissionsForEvent(self, event, id):
         result = self._isEventTriggerableByAUser(event)
         if result:
+            self._logger.debug("event is triggerable by user. checking permissions database.")
             count = self._database[event]['user'].count({'id' : id})
             result = count > 0
         self._logger.debug(f"doesUserIdHavePermissionsForEvent called. event: {event}, id: {id}, result: {result}")
         return result
         
     def _isEventTriggerableByAUser(self, event):
-        return event == "start" or event == "stop" or event == "restart" or event == "status"
+        return event == "start" or event == "stop" or event == "restart" or event == "status" or event == "add"
