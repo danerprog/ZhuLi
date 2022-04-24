@@ -40,7 +40,7 @@ class Bot:
         
     def isRunning(self):
         self._logger.debug("isRunning called.")
-        return self._process is not None
+        return self._process is not None and self._process.poll() is None
         
     def getName(self):
         self._logger.debug("_name called.")
