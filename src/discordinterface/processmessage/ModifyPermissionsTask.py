@@ -13,7 +13,7 @@ class ModifyPermissionsTask(MessageTask):
         self._logger.debug("initialized")
         
     def run(self):
-        if self._modify_type == "add":
+        if self._modify_type == "add" or self._modify_type == "remove":
             self._modifyPermissionsIfPossible()
         else:
             self._reply = {
@@ -34,6 +34,9 @@ class ModifyPermissionsTask(MessageTask):
         if self._modify_type == "add":
             self._modifyPermissionsForUser = self._context['permissions_manager'].addEventPermissionsForUser
             self._modifyPermissionsForRole = self._context['permissions_manager'].addEventPermissionsForGroup
+        elif self._modify_type == "remove":
+            self._modifyPermissionsForUser = self._context['permissions_manager'].removeEventPermissionsForUser
+            self._modifyPermissionsForRole = self._context['permissions_manager'].removeEventPermissionsForGroup
         else:
             self._logger.warning(f"no permission modifiers set for modify_type: {self._modify_type}!")
             

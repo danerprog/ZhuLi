@@ -28,6 +28,11 @@ class VirtualDatabase(Database):
             for key in mapping.keys():
                 self._logger.debug(f"inserting key: {key}, value: {mapping[key]}")
                 self.database[key] = mapping[key]
+                
+        def remove(self, mapping):
+            for key in mapping.keys():
+                self._logger.debug(f"removing key: {key}, value: {mapping[key]}")
+                self.database.pop(key)
 
     def __init__(self, **params):
         name = params["name"]

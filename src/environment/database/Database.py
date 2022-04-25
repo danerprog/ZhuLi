@@ -21,6 +21,10 @@ class Database:
             @abstractmethod
             def insert(self, mapping):
                 pass
+                
+            @abstractmethod
+            def remove(self, mapping):
+                pass
         
     
     def __init__(self, main_slice, **params):
@@ -36,3 +40,6 @@ class Database:
 
     def insert(self, mapping):
         return self._main_slice.insert(mapping)
+        
+    def remove(self, mapping):
+        return self._main_slice.remove(mapping)

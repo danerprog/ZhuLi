@@ -1,4 +1,5 @@
 from .AddEventTask import AddEventTask
+from .RemoveEventTask import RemoveEventTask
 from .MessageTask import MessageTask
 from .ShouldMessageBeProcessedTask import ShouldMessageBeProcessedTask
 
@@ -25,12 +26,15 @@ class ProcessMessageTask(MessageTask):
             add_event_task = AddEventTask(**self._context)
             add_event_task.run()
             add_event_task.passResultsTo(self)
+        elif event == "remove":
+            remove_event_task = RemoveEventTask(**self._context)
+            remove_event_task.run()
+            remove_event_task.passResultsTo(self)
         else:
             self._is_complete = True
             self._reply = None
             self._fireEvent(event)
-            
-            
+
     def _fireEvent(self, event):
         self._logger.info(f"firing '{event}'.")
         kwargs = {
@@ -38,3 +42,4 @@ class ProcessMessageTask(MessageTask):
             "channel_id" : self._context['preprocessed_message'].raw().channel.id
         }
         self._context['environment'].fireEvent(event, **kwargs)
+

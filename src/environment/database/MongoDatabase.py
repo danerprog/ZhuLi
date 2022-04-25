@@ -23,9 +23,10 @@ class MongoDatabase(Database):
             elif isinstance(mapping, dict):
                 self._insertDictionary(mapping)
             else:
-                self._logger.warning("Ignoring insert for unrecognized mapping type {}.".format(
-                    str(type(mapping))
-                ))
+                self._logger.warning(f"Ignoring insert for unrecognized mapping type {type(mapping)}.")
+                
+        def remove(self, mapping):
+            self._database.delete_many(mapping)
                 
         def _insertList(self, value):
             self._logger.debug("_insertList called. value: " + str(value))
