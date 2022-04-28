@@ -25,8 +25,14 @@ class MongoDatabase(Database):
             else:
                 self._logger.warning(f"Ignoring insert for unrecognized item type {type(item)}.")
                 
-        def remove(self, filter):
-            self._database.delete_many(filter)
+        def remove(self, filter, fields_to_remove = None):
+            self._logger.debug(f"remove called. filter: {filter}, fields_to_remove: {fields_to_remove}")
+            if fields_to_remove is None:
+                self._logger.debug("deleting all items matching filter.")
+                self._database.delete_many(filter)
+            else:
+                self._logger.debug("removing indicated fields of documents matching the filter.")
+                self._database.update_one(filter, self._getRemoveOperationForItem(fields_to_remove))
             
         def query(self, filter = None):
             query_result = []
@@ -35,11 +41,12 @@ class MongoDatabase(Database):
                 query_result.append(document)
             return query_result
             
-        def update(self, filter, updated_item):
-            result = self._database.find_one_and_update(filter, updated_item)
+        def update(self, filter, item):
+            self._logger.debug(f"update called. filter: {filter}, item: {item}")
+            result = self._database.update_one(filter, self._getAddOperationForItem(item))
             if result is None:
                 self._logger.warning(f"no item found with filter: {filter}. update request ignored.")
-                
+  
         def _insertList(self, item_list):
             self._logger.debug(f"_insertList called. item: {item_list}")
             self._database.insert_many(item_list)
@@ -47,7 +54,28 @@ class MongoDatabase(Database):
         def _insertDictionary(self, item):
             self._logger.debug(f"_insertDictionary called. item: {item}")
             self._database.insert_one(item)
-        
+            
+        def _getAddOperationForItem(self, item):
+            self._logger.debug(f"_getAddOperationForItem called. item: {item}")
+            operation = {}
+            for key, value in item.items():
+                if isinstance(value, list):
+                    operation['$addToSet'] = {key: {'$each' : value}}
+                else:
+                    operation['$set'] = {key: value}
+            self._logger.debug(f"_getAddOperationForItem done. operation: {operation}")
+            return operation
+            
+        def _getRemoveOperationForItem(self, item):
+            self._logger.debug(f"_getRemoveOperationForItem called. item: {item}")
+            operation = {}
+            for key, value in item.items():
+                if isinstance(value, list):
+                    operation['$pullAll'] = {key: value}
+                else:
+                    operation['$pop'] = {key: value}
+            self._logger.debug(f"_getRemoveOperationForItem done. operation: {operation}")
+            return operation
 
     def __init__(self, **params):
         self._database = MongoClient('localhost', params["port"])

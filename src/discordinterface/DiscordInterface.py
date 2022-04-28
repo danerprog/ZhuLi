@@ -12,7 +12,7 @@ class DiscordInterface(discord.Client):
         self._environment = Environment.instance()
         self._logger = self._environment.getLogger("DiscordInterface")
         self._permissions_manager = PermissionsManager(
-            self._environment.database()['discordinterface']['permissions'],
+            self._environment.database()['discordinterface'],
             self._logger.getChild("PermissionsManager")
         )
         self._message_processor = MessageProcessor(
@@ -41,13 +41,13 @@ class DiscordInterface(discord.Client):
         
     def _prepareOwnerPermissions(self):
         id = int(self._environment.getConfiguration("main")["Discord"]["ownerid"])
-        self._permissions_manager.addEventPermissionsForUser('start', id)
-        self._permissions_manager.addEventPermissionsForUser('stop', id)
-        self._permissions_manager.addEventPermissionsForUser('restart', id)
-        self._permissions_manager.addEventPermissionsForUser('status', id)
-        self._permissions_manager.addEventPermissionsForUser('add', id)
-        self._permissions_manager.addEventPermissionsForUser('remove', id)
-        self._permissions_manager.addEventPermissionsForUser('list', id)
+        self._permissions_manager.addEventPermissionsForUser('start', id, 'owner')
+        self._permissions_manager.addEventPermissionsForUser('stop', id, 'owner')
+        self._permissions_manager.addEventPermissionsForUser('restart', id, 'owner')
+        self._permissions_manager.addEventPermissionsForUser('status', id, 'owner')
+        self._permissions_manager.addEventPermissionsForUser('add', id, 'owner')
+        self._permissions_manager.addEventPermissionsForUser('remove', id, 'owner')
+        self._permissions_manager.addEventPermissionsForUser('list', id, 'owner')
 
     def _convertToEmbed(self, message):
         embed = discord.Embed()

@@ -25,17 +25,19 @@ class ModifyPermissionsTask(MessageTask):
             
     def _initializeMemberVariables(self):
         self._preprocessed_message = self._context['preprocessed_message']
+        self._permissions_manager = self._context['permissions_manager']
         self._raw_message = self._preprocessed_message.raw()
         self._subcommand = self._preprocessed_message.token(1)
         self._event = self._preprocessed_message.token(2)
+        self._guild_id = self._raw_message.guild.id
         
     def _initializePermissionModifiers(self):
         if self._modify_type == "add":
-            self._modifyPermissionsForUser = self._context['permissions_manager'].addEventPermissionsForUser
-            self._modifyPermissionsForRole = self._context['permissions_manager'].addEventPermissionsForGroup
+            self._modifyPermissionsForUser = self._permissions_manager.addEventPermissionsForUser
+            self._modifyPermissionsForRole = self._permissions_manager.addEventPermissionsForRole
         elif self._modify_type == "remove":
-            self._modifyPermissionsForUser = self._context['permissions_manager'].removeEventPermissionsForUser
-            self._modifyPermissionsForRole = self._context['permissions_manager'].removeEventPermissionsForGroup
+            self._modifyPermissionsForUser = self._permissions_manager.removeEventPermissionsForUser
+            self._modifyPermissionsForRole = self._permissions_manager.removeEventPermissionsForRole
         else:
             self._logger.warning(f"no permission modifiers set for modify_type: {self._modify_type}!")
             
@@ -63,18 +65,18 @@ class ModifyPermissionsTask(MessageTask):
         for user in users:
             id = user.id
             self._logger.debug(f"modifying permissions for id: {id}, event: {self._event}")
-            self._modifyPermissionsForUser(self._event, id)
-            affected_users.append(user.name)
+            if self._modifyPermissionsForUser(self._event, id, self._guild_id):
+                affected_users.append(user.name)
         return affected_users
             
     def _modifyPermissionsForRoles(self, roles):
         affected_roles = []
-        self._logger.debug(f"_addPermissionsForRoles called. roles: {roles}, modify_type: {self._modify_type}")
+        self._logger.debug(f"_modifyPermissionsForRoles called. roles: {roles}, modify_type: {self._modify_type}")
         for role in roles:
             id = role.id
             self._logger.debug(f"modifying permissions for id: {id}, event: {self._event}")
-            self._modifyPermissionsForRole(self._event, id)
-            affected_roles.append(role.name)
+            if self._modifyPermissionsForRole(self._event, id, self._guild_id):
+                affected_roles.append(role.name)
         return affected_roles
         
     def _generateResults(self, affected_users, affected_roles):

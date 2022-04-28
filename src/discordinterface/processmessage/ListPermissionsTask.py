@@ -70,17 +70,17 @@ class ListPermissionsTask(MessageTask):
         
     async def _getUserPermissionsInStringFor(self, event):
         self._logger.debug(f"_getUserPermissionsInStringFor called. event: {event}")
-        user_permissions = self._permissions_manager.getUserPermissionsForEvent(event)
-        user_names = await self._getUserNames(user_permissions)
+        users = self._permissions_manager.getUsersWithEventPermissions(event, self._guild.id)
+        user_names = await self._getUserNames(users)
         self._logger.debug(f"_getUserPermissionsInStringFor done. user_names: {user_names}")
         return "\n".join(user_names)
         
-    async def _getUserNames(self, user_permissions):
-        self._logger.debug(f"_getUserNames called. user_permissions: {user_permissions}")
-        tasks = []    
-        for user_permission in user_permissions:
-            self._logger.debug(f"stringifying user_permission: {user_permission}")
-            tasks.append(asyncio.create_task(self._guild.fetch_member(user_permission['id'])))
+    async def _getUserNames(self, users):
+        self._logger.debug(f"_getUserNames called. users: {users}")
+        tasks = []
+        for user in users:
+            self._logger.debug(f"stringifying user_permission: {user}")
+            tasks.append(asyncio.create_task(self._guild.fetch_member(user['id'])))
         self._logger.debug(f"gathering tasks. tasks: {tasks}")
         
         users = await asyncio.gather(*tasks)
@@ -92,9 +92,9 @@ class ListPermissionsTask(MessageTask):
         
     async def _getRolePermissionsInStringFor(self, event):
         self._logger.debug(f"_getRolePermissionsInStringFor called. event: {event}")
-        role_permissions = self._permissions_manager.getGroupPermissionsForEvent(event)
+        roles = self._permissions_manager.getRolesWithEventPermissions(event, self._guild.id)
         role_names = []
-        for role_permission in role_permissions:
-            self._logger.debug(f"stringifying role_permission: {role_permission}")
-            role_names.append(self._guild.get_role(role_permission['id']).name)
+        for role in roles:
+            self._logger.debug(f"stringifying role: {role}")
+            role_names.append(self._guild.get_role(role['id']).name)
         return "\n".join(role_names)

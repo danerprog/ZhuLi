@@ -1,5 +1,6 @@
 from .MessageTask import MessageTask
 
+
 class ShouldMessageBeProcessedTask(MessageTask):
 
     def __init__(self, **context):
@@ -25,7 +26,9 @@ class ShouldMessageBeProcessedTask(MessageTask):
     def _initializeMemberVariables(self):
         self._preprocessed_message = self._context['preprocessed_message']
         self._first_token = self._preprocessed_message.token(0)
-        self._raw_message = self._preprocessed_message.raw()  
+        self._raw_message = self._preprocessed_message.raw()
+        self._guild_id = self._raw_message.guild.id
+        self._permissions_manager = self._context['permissions_manager']
         
     def _isFirstTokenACommandForThisBot(self):
         result = False
@@ -49,7 +52,10 @@ class ShouldMessageBeProcessedTask(MessageTask):
     def _doesSenderHavePermissionsAsAUser(self):
         event = self._preprocessed_message.event()
         result = None
-        if self._context['permissions_manager'].doesUserIdHavePermissionsForEvent(event, self._raw_message.author.id):
+        does_user_have_permissions_in_guild = self._permissions_manager.doesUserIdHavePermissionsForEvent(event, self._raw_message.author.id, self._guild_id)
+        is_user_an_owner = self._permissions_manager.doesUserIdHavePermissionsForEvent(event, self._raw_message.author.id, 'owner')
+
+        if is_user_an_owner or does_user_have_permissions_in_guild:
             result = True
             self._logger.debug(f"user {self._raw_message.author.name}({self._raw_message.author.id}) has permissions as a user.")
         else:
@@ -60,7 +66,7 @@ class ShouldMessageBeProcessedTask(MessageTask):
     def _doesSenderHavePermissionsAsARoleMember(self):
         event = self._preprocessed_message.event()
         result = None
-        if self._context['permissions_manager'].doesGroupIdHavePermissionsForEvent(event, self._raw_message.author.top_role.id):
+        if self._context['permissions_manager'].doesRoleIdHavePermissionsForEvent(event, self._raw_message.author.top_role.id, self._guild_id):
             result = True
             self._logger.debug(f"user has permissions as a member of top role {self._raw_message.author.top_role.name}({self._raw_message.author.top_role.id})")
         else:

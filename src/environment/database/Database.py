@@ -23,17 +23,17 @@ class Database:
                 pass
                 
             @abstractmethod
-            def remove(self, filter):
+            def remove(self, filter, fields_to_remove = None):
                 pass
                 
             @abstractmethod
-            def query(self, filter):
+            def query(self, filter = None):
                 pass
                 
             @abstractmethod
             def update(self, filter, updated_item):
                 pass
-        
+                
     
     def __init__(self, main_slice, **params):
         self._logger = params["logger"]
@@ -57,3 +57,4 @@ class Database:
 
     def update(self, filter, updated_item):
         return self._main_slice.update(filter, updated_item)
+  
