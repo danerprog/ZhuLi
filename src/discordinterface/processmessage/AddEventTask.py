@@ -6,41 +6,44 @@ class AddEventTask(MessageTask):
     
     def __init__(self, **context):
         super().__init__(**context)
-        self._logger = self._context['parent_logger'].getChild(__name__)
         self._initializeMemberVariables()
         self._logger.debug("initialized")
         
-    def run(self):
+    async def run(self):
         if self._subcommand is None:
-            self._reply = {
-                "title" : "add",
-                "description" : "Tried to add without subcommand! Usage: add <subcommand> <args>",
-                "level" : "error"
-            }
-            self._logger.info("tried to trigger add event with no subcommand.")
+            self._setErrorReply("Tried to add without subcommand! Usage: add <subcommand> <args>")
         elif self._subcommand == "permissions":
             modify_permissions_task = ModifyPermissionsTask(
                 modify_type = "add",
                 **self._context
             )
-            modify_permissions_task.run()
+            await modify_permissions_task.run()
             modify_permissions_task.passResultsTo(self)
         else:
-            self._reply = {
-                "title" : "add",
-                "description" : f"Unsupported subcommand '{self._subcommand}'!",
-                "level" : "error",
-                "fields" : [{
-                    "name" : "Supported subcommands:",
-                    "value" : "permissions",
-                    "inline" : True
-                }]
-            }
-        self._is_complete = True
+            self._setErrorReply(f"Unsupported subcommand '{self._subcommand}'!")
+
         
     def _initializeMemberVariables(self):
         self._preprocessed_message = self._context['preprocessed_message']
         self._raw_message = self._preprocessed_message.raw()
         self._subcommand = self._preprocessed_message.token(1)
+    
+    def _setErrorReply(self, message):
+        self._logger.debug(f"_setErrorReply called. message: {message}")
+        self._reply = {
+            "title" : "add",
+            "description" : message,
+            "level" : "error",
+            "fields" : [{
+                "name" : "Supported subcommands",
+                "value" : self._getSupportedSubcommandsString(),
+                "inline" : True
+            }]
+        }
+        
+    def _getSupportedSubcommandsString(self):
+        return "permissions"
+        
+    
 
 

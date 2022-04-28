@@ -5,14 +5,13 @@ class ModifyPermissionsTask(MessageTask):
     
     def __init__(self, modify_type = None, **context):
         super().__init__(**context)
-        self._logger = self._context['parent_logger'].getChild(__name__)
         self._modify_type = modify_type
         
         self._initializeMemberVariables()
         self._initializePermissionModifiers()
         self._logger.debug("initialized")
         
-    def run(self):
+    async def run(self):
         if self._modify_type == "add" or self._modify_type == "remove":
             self._modifyPermissionsIfPossible()
         else:
@@ -96,13 +95,13 @@ class ModifyPermissionsTask(MessageTask):
             if len(affected_users) > 0:
                 self._reply["fields"].append({
                     "name" : "Users",
-                    "value" : "/n".join(affected_users),
+                    "value" : "\n".join(affected_users),
                     "inline" : True
                 })
             if len(affected_roles) > 0:
                 self._reply["fields"].append({
                     "name" : "Users",
-                    "value" : "/n".join(affected_roles),
+                    "value" : "\n".join(affected_roles),
                     "inline" : True
                 })
        

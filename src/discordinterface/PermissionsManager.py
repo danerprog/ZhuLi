@@ -29,6 +29,10 @@ class PermissionsManager:
         self._logger.debug(f"doesGroupIdHavePermissionsForEvent called. event: {event}, id: {id}, result: {result}")
         return result
         
+    def getGroupPermissionsForEvent(self, event):
+        self._logger.debug(f"getGroupPermissionsForEvent called. event: {event}")
+        return self._database[event]['group'].query()
+ 
     def addEventPermissionsForUser(self, event, id):
         self._logger.debug(f"addEventPermissionsForUser called. event: {event}, id: {id}")
         if not self.doesUserIdHavePermissionsForEvent(event, id):
@@ -52,5 +56,9 @@ class PermissionsManager:
         self._logger.debug(f"doesUserIdHavePermissionsForEvent called. event: {event}, id: {id}, result: {result}")
         return result
         
+    def getUserPermissionsForEvent(self, event):
+        self._logger.debug(f"getUserPermissionsForEvent called. event: {event}")
+        return self._database[event]['user'].query()
+        
     def _isEventTriggerableByAUser(self, event):
-        return event == "start" or event == "stop" or event == "restart" or event == "status" or event == "add" or event == "remove"
+        return event == "start" or event == "stop" or event == "restart" or event == "status" or event == "add" or event == "remove" or event == "list"

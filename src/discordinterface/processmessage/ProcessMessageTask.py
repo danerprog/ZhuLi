@@ -1,39 +1,45 @@
 from .AddEventTask import AddEventTask
-from .RemoveEventTask import RemoveEventTask
+from .ListEventTask import ListEventTask
 from .MessageTask import MessageTask
+from .RemoveEventTask import RemoveEventTask
+
 from .ShouldMessageBeProcessedTask import ShouldMessageBeProcessedTask
 
 
 class ProcessMessageTask(MessageTask):
     def __init__(self, **context):
         super().__init__(**context)
-        self._logger = self._context['parent_logger'].getChild(__name__)
         self._logger.debug("initialized")
         
-    def run(self):
+    async def run(self):
         self._logger.debug("running")
         should_message_be_processed_task = ShouldMessageBeProcessedTask(**self._context)
-        should_message_be_processed_task.run()
+        await should_message_be_processed_task.run()
         if should_message_be_processed_task.result():
-            self._processMessage()
+            await self._processMessage()
         else:
             should_message_be_processed_task.passResultsTo(self)
             self._is_complete = True
 
-    def _processMessage(self):
+    async def _processMessage(self):
         event = self._context['preprocessed_message'].event()
-        if event == "add":
-            add_event_task = AddEventTask(**self._context)
-            add_event_task.run()
-            add_event_task.passResultsTo(self)
-        elif event == "remove":
-            remove_event_task = RemoveEventTask(**self._context)
-            remove_event_task.run()
-            remove_event_task.passResultsTo(self)
+        task = self._getTask(event)
+        if task is not None:
+            await task.run()
+            task.passResultsTo(self)
         else:
-            self._is_complete = True
             self._reply = None
             self._fireEvent(event)
+            
+    def _getTask(self, event):
+        task_to_return = None
+        if event == "add" :
+            task_to_return = AddEventTask(**self._context)
+        elif event == "remove" :
+            task_to_return = RemoveEventTask(**self._context)
+        elif event == "list" :
+            task_to_return = ListEventTask(**self._context)
+        return task_to_return
 
     def _fireEvent(self, event):
         self._logger.info(f"firing '{event}'.")

@@ -15,15 +15,23 @@ class Database:
                 pass
                 
             @abstractmethod
-            def count(self, mapping):
+            def count(self, filter):
                 pass
                 
             @abstractmethod
-            def insert(self, mapping):
+            def insert(self, item):
                 pass
                 
             @abstractmethod
-            def remove(self, mapping):
+            def remove(self, filter):
+                pass
+                
+            @abstractmethod
+            def query(self, filter):
+                pass
+                
+            @abstractmethod
+            def update(self, filter, updated_item):
                 pass
         
     
@@ -35,11 +43,17 @@ class Database:
     def __getitem__(self, key):
         return self._main_slice[key]
 
-    def count(self, mapping):
-        return self._main_slice.count(mapping)
+    def count(self, filter):
+        return self._main_slice.count(filter)
 
-    def insert(self, mapping):
-        return self._main_slice.insert(mapping)
+    def insert(self, item):
+        return self._main_slice.insert(item)
         
-    def remove(self, mapping):
-        return self._main_slice.remove(mapping)
+    def remove(self, filter):
+        return self._main_slice.remove(filter)
+        
+    def query(self, filter):
+        return self._main_slice.query(filter)
+
+    def update(self, filter, updated_item):
+        return self._main_slice.update(filter, updated_item)

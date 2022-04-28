@@ -4,11 +4,10 @@ class ShouldMessageBeProcessedTask(MessageTask):
 
     def __init__(self, **context):
         super().__init__(**context)
-        self._logger = self._context['parent_logger'].getChild(__name__)
         self._initializeMemberVariables()
         self._logger.debug("initialized")
         
-    def run(self):
+    async def run(self):
         if self._isFirstTokenACommandForThisBot():
             if not self._doesSenderHavePermissionsToTriggerEvent():
                 self._logger.info("no permissions found for sender")

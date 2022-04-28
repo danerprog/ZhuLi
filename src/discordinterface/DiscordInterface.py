@@ -7,18 +7,10 @@ import discord
 
 class DiscordInterface(discord.Client):
 
-    class NoMessageProcessor:
-        def __init__(self, logger):
-            self._logger = logger
-            
-        def process(self, message):
-            self._logger.warning(f"ignoring message: {message}")
-
     def __init__(self):
         super().__init__()
         self._environment = Environment.instance()
         self._logger = self._environment.getLogger("DiscordInterface")
-        self._message_processor = DiscordInterface.NoMessageProcessor(self._logger.getChild("NoMessageProcessor"))
         self._permissions_manager = PermissionsManager(
             self._environment.database()['discordinterface']['permissions'],
             self._logger.getChild("PermissionsManager")
@@ -55,6 +47,7 @@ class DiscordInterface(discord.Client):
         self._permissions_manager.addEventPermissionsForUser('status', id)
         self._permissions_manager.addEventPermissionsForUser('add', id)
         self._permissions_manager.addEventPermissionsForUser('remove', id)
+        self._permissions_manager.addEventPermissionsForUser('list', id)
 
     def _convertToEmbed(self, message):
         embed = discord.Embed()

@@ -1,6 +1,6 @@
 from .Database import Database
 
-from pymongo import MongoClient
+from pymongo import MongoClient, CursorType
 
 
 class MongoDatabase(Database):
@@ -14,27 +14,39 @@ class MongoDatabase(Database):
         def __getitem__(self, key):
             return MongoDatabase.Slice(self._database[key], self._logger)
             
-        def count(self, mapping):
-            return self._database.count_documents(mapping)
+        def count(self, filter):
+            return self._database.count_documents(filter)
             
-        def insert(self, mapping):
-            if isinstance(mapping, list):
-                self._insertList(mapping)
-            elif isinstance(mapping, dict):
-                self._insertDictionary(mapping)
+        def insert(self, item):
+            if isinstance(item, list):
+                self._insertList(item)
+            elif isinstance(item, dict):
+                self._insertDictionary(item)
             else:
-                self._logger.warning(f"Ignoring insert for unrecognized mapping type {type(mapping)}.")
+                self._logger.warning(f"Ignoring insert for unrecognized item type {type(item)}.")
                 
-        def remove(self, mapping):
-            self._database.delete_many(mapping)
+        def remove(self, filter):
+            self._database.delete_many(filter)
+            
+        def query(self, filter = None):
+            query_result = []
+            cursor = self._database.find(filter = filter, cursor_type = CursorType.EXHAUST)
+            for document in cursor:
+                query_result.append(document)
+            return query_result
+            
+        def update(self, filter, updated_item):
+            result = self._database.find_one_and_update(filter, updated_item)
+            if result is None:
+                self._logger.warning(f"no item found with filter: {filter}. update request ignored.")
                 
-        def _insertList(self, value):
-            self._logger.debug("_insertList called. value: " + str(value))
-            self._database.insert_many(value)
+        def _insertList(self, item_list):
+            self._logger.debug(f"_insertList called. item: {item_list}")
+            self._database.insert_many(item_list)
         
-        def _insertDictionary(self, value):
-            self._logger.debug("_insertDictionary called. value: " + str(value))
-            self._database.insert_one(value)
+        def _insertDictionary(self, item):
+            self._logger.debug(f"_insertDictionary called. item: {item}")
+            self._database.insert_one(item)
         
 
     def __init__(self, **params):
