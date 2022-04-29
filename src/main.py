@@ -1,6 +1,6 @@
-from environment.Environment import Environment
-from discordinterface.DiscordInterface import DiscordInterface
-from zhuli.ZhuLi import ZhuLi
+from morph.Environment import Environment
+from interfaces.discordinterface.DiscordInterface import DiscordInterface
+from components.batchfilemanager.BatchFileManager import BatchFileManager
 
 import sys
 
@@ -9,7 +9,7 @@ class Main:
 
     def __init__(self, config_directory):
         self._environment = Environment.instance(config_directory);
-        self._zhu_li = ZhuLi()
+        self._batch_file_manager = BatchFileManager()
         self._initializeLoggers()
         
     def run(self):

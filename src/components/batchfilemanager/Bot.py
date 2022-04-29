@@ -1,5 +1,3 @@
-from environment.Environment import Environment
-
 from datetime import datetime
 import os
 from pathlib import Path

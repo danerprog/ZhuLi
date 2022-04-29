@@ -1,6 +1,6 @@
 from .MessageProcessor import MessageProcessor
 from .PermissionsManager import PermissionsManager
-from environment.Environment import Environment
+from morph.Environment import Environment
 
 import discord
 
@@ -13,11 +13,12 @@ class DiscordInterface(discord.Client):
         self._logger = self._environment.getLogger("DiscordInterface")
         self._permissions_manager = PermissionsManager(
             self._environment.database()['discordinterface'],
-            self._logger.getChild("PermissionsManager")
+            self._logger
         )
         self._message_processor = MessageProcessor(
             self._permissions_manager,
-            self._logger.getChild("MessageProcessor")
+            self._environment,
+            self._logger
         )
         self._logger.debug("instantiated")
         

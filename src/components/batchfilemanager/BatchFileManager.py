@@ -1,13 +1,13 @@
 from .Bot import Bot
-from environment.Environment import Environment
+from morph.Environment import Environment
 
 import os
 
 
-class ZhuLi:
+class BatchFileManager:
     def __init__(self):
         self._environment = Environment.instance()
-        self._logger = self._environment.getLogger("ZhuLi")
+        self._logger = self._environment.getLogger(self.__class__.__name__)
         self._bots = []
         self._initializeBots()
         self._registerCallbacks()

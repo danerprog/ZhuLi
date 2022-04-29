@@ -3,7 +3,7 @@
 class PermissionsManager:
 
     def __init__(self, permissions_database, logger):
-        self._logger = logger
+        self._logger = logger.getChild(self.__class__.__name__)
         self._database = permissions_database
         self._logger.info("initialized")
         
