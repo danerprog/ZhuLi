@@ -1,8 +1,8 @@
-from .ComponentManager import ComponentManager
-from .ConfigurationManager import ConfigurationManager
-from .DatabaseManager import DatabaseManager
-from .EventListenerManager import EventListenerManager
-from .LoggingManager import LoggingManager
+from manager.ComponentManager import ComponentManager
+from manager.ConfigurationManager import ConfigurationManager
+from manager.DatabaseManager import DatabaseManager
+from manager.EventListenerManager import EventListenerManager
+from manager.LoggingManager import LoggingManager
 
 import logging
 
