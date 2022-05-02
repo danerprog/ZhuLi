@@ -1,6 +1,6 @@
 from morph.Environment import Environment
 from interfaces.discordinterface.DiscordInterface import DiscordInterface
-from components.batchfilemanager.BatchFileManager import BatchFileManager
+from backend.batchfilemanager.BatchFileManager import BatchFileManager
 
 import sys
 
