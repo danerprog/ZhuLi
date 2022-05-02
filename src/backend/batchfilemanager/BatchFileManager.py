@@ -1,14 +1,12 @@
 from .Bot import Bot
-from morph.Environment import Environment
+from morph.MainComponent import MainComponent
 
 import os
 
 
-class BatchFileManager:
+class BatchFileManager(MainComponent):
     def __init__(self):
-        self._environment = Environment.instance()
-        self._logger = self._environment.getLogger(self.__class__.__name__)
-        self._bots = []
+        super().__init__()
         self._initializeBots()
         self._registerCallbacks()
         
@@ -128,6 +126,7 @@ class BatchFileManager:
 
     def _initializeBots(self):
         self._logger.info("initializing bots...")
+        self._bots = []
         batch_file_directory = self._environment.configuration()["main"]["App"]["batchfiledirectory"]
         for filename in os.listdir(batch_file_directory):
             if filename.endswith(".bat"):

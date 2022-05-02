@@ -1,3 +1,4 @@
+from .ComponentManager import ComponentManager
 from .ConfigurationManager import ConfigurationManager
 from .DatabaseManager import DatabaseManager
 from .EventListenerManager import EventListenerManager
@@ -10,10 +11,14 @@ class Environment:
 
     class Shard:
         
-        def __init__(self, name, parent_environment):
+        def __init__(self, component_name, component_level, parent_environment):
+            self._component_name = component_name
+            self._component_level = component_level
             self._parent = parent_environment
-            self._logger = self._parent.getLogger(f"{self.__class__.__name__}.{name}")
+            self._logger = self._parent.getLogger(f"{self.__class__.__name__}.{component_name}[{component_level}]")
             self._event_listener_manager = EventListenerManager(self._logger)
+            self._component_manager = self._parent.getComponentManager()
+            self._component_manager.registerComponentAtLevel(component_name, component_level)
             self._logger.info("Environment shard created.")
             
         def configuration(self):
@@ -25,11 +30,11 @@ class Environment:
         def logger(self):
             return self._parent.logger()
 
-        def getLogger(self, name = None):
-            return self._parent.getLogger(name)
+        def getLogger(self, logger_name = None):
+            return self._parent.getLogger(logger_name)
             
-        def getConfiguration(self, name):
-            return self._parent.getConfiguration(name)
+        def getConfiguration(self, configuration_file_name):
+            return self._parent.getConfiguration(configuration_file_name)
             
         def registerCallback(self, event, callback):
             self._event_listener_manager.register(event, callback)
@@ -40,6 +45,15 @@ class Environment:
         def fireAndPropagateEvent(self, event, *args, **kwargs):
             self.fireEvent(event, *args, **kwargs)
             self._parent.fireEvent(event, *args, **kwargs)
+            
+        def initialize(component_name, component_level):
+            environment = Environment.instance()
+            if environment is None:
+                print(">>> No environment instance found! No shard will be created.")
+            else:
+                if component_name in Environment.SHARDS:
+                    print(f">>> Reinitializing shard. component_name: {component_name}, component_level: {component_level}")
+                Environment.SHARDS[component_name] = Environment.Shard(component_name, component_level, environment)
 
 
     INSTANCE = None
@@ -51,6 +65,7 @@ class Environment:
         self._initializeLoggingManager()
         self._initializeEventListenerManager()
         self._initializeDatabaseManager()
+        self._initializeComponentManager()
 
     def configuration(self):
         return self._configuration_manager
@@ -60,6 +75,9 @@ class Environment:
         
     def logger(self):
         return self._logging_manager
+        
+    def getComponentManager(self):
+        return self._component_manager
 
     def getLogger(self, name = None):
         return self._logging_manager.getLogger(name)
@@ -85,6 +103,9 @@ class Environment:
             self.getLogger("DatabaseManager"),
             **database_configuration
         )
+
+    def _initializeComponentManager(self):
+        self._component_manager = ComponentManager(self.getLogger())
         
     def _initializeEventListenerManager(self):
         self._event_listener_manager = EventListenerManager(self.getLogger())
@@ -98,13 +119,13 @@ class Environment:
     def initialize(config_directory):
         Environment.INSTANCE = Environment(config_directory)
         
-    def shard(name):
-        environment = Environment.instance()
-        if name not in Environment.SHARDS and environment is not None:
-            Environment.SHARDS[name] = Shard(name, environment)
-        elif environment is None:
-            print(">>> No environment instance found! No shard will be created.")
-        return Environment.SHARDS[name]
+    def shard(component_name):
+        shard = None
+        if component_name not in Environment.SHARDS:
+            print(">>> No environment shard found! Initialize a shard using Environment.Shard.initialize()")
+        else:
+            shard = Environment.SHARDS[component_name]
+        return shard
         
     def instance():
         if Environment.INSTANCE is None:

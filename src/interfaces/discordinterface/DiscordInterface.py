@@ -1,16 +1,15 @@
 from .MessageProcessor import MessageProcessor
 from .PermissionsManager import PermissionsManager
-from morph.Environment import Environment
+from morph.MainComponent import MainComponent
 
 import discord
 
 
-class DiscordInterface(discord.Client):
+class DiscordInterface(discord.Client, MainComponent):
 
     def __init__(self):
-        super().__init__()
-        self._environment = Environment.instance()
-        self._logger = self._environment.getLogger("DiscordInterface")
+        discord.Client.__init__(self)
+        MainComponent.__init__(self)
         self._permissions_manager = PermissionsManager(
             self._environment.database()['discordinterface'],
             self._logger
@@ -20,6 +19,7 @@ class DiscordInterface(discord.Client):
             self._environment,
             self._logger
         )
+        self.run(self._environment.configuration()["main"]["Discord"]["token"])
         self._logger.debug("instantiated")
         
     async def on_ready(self):
