@@ -22,8 +22,9 @@ class ConfigurationManager:
         config_file = self._directory + filename + ".ini"
         if not os.path.isfile(config_file):
             print(">>> WARNING: config_file {} is not a file!".format(config_file))
-        config_parser.read(config_file)
-        self._unpackConfig(filename, config_parser)
+        else:
+            config_parser.read(config_file)
+            self._unpackConfig(filename, config_parser)
         
     def getConfiguration(self, filename):
         return self._config[filename]

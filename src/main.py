@@ -8,7 +8,8 @@ import sys
 class Main:
 
     def __init__(self, config_directory):
-        self._environment = Environment.instance(config_directory);
+        Environment.initialize(config_directory)
+        self._environment = Environment.instance();
         self._batch_file_manager = BatchFileManager()
         self._initializeLoggers()
         

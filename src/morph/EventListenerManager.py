@@ -1,19 +1,10 @@
 import asyncio
 
 class EventListenerManager:
-
-    class NoLogger:
-        def debug(self, string):
-            pass
-            
-        def info(self, string):
-            pass
-
-    INSTANCE = None
     
-    def __init__(self):
+    def __init__(self, logger):
         self._listeners = {}
-        self._logger = EventListenerManager.NoLogger()
+        self._logger = logger.getChild(self.__class__.__name__)
         
     def register(self, event, callback):
         self._logger.info("registered event '{}' with callback: {}".format(
@@ -35,9 +26,6 @@ class EventListenerManager:
                     asyncio.create_task(callback(*args, **kwargs))
                 else:
                     callback(*args, **kwargs)
-                    
-    def setLogger(self, logger):
-        self._logger = logger
 
     def _createListenerListIfNeeded(self, event):
         if not self._doesEventHaveAList(event):
@@ -45,8 +33,3 @@ class EventListenerManager:
             
     def _doesEventHaveAList(self, event):
         return event in self._listeners
-        
-    def instance():
-        if EventListenerManager.INSTANCE is None:
-            EventListenerManager.INSTANCE = EventListenerManager()
-        return EventListenerManager.INSTANCE
