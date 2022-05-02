@@ -20,7 +20,7 @@ class Main:
         import backend.batchfilemanager
     
     def _initializeInterfaceComponents(self):
-        import interfaces.discordinterface
+        import interface.discordinterface
 
 
 if __name__ == "__main__":
