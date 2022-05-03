@@ -47,5 +47,5 @@ class ProcessMessageTask(MessageTask):
             "bot_name" : self._context['preprocessed_message'].token(1),
             "channel_id" : self._context['preprocessed_message'].raw().channel.id
         }
-        self._context['environment'].fireEvent(event, **kwargs)
+        self._context['environment'].fireEventAtBackend(event, **kwargs)
 

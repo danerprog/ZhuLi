@@ -6,30 +6,31 @@ class EventListenerManager:
         self._listeners = {}
         self._logger = logger.getChild(self.__class__.__name__)
         
-    def register(self, event, callback):
-        self._logger.info("registered event '{}' with callback: {}".format(
-            event,
-            str(callback)
-        ))
-        self._createListenerListIfNeeded(event)
-        self._listeners[event].append(callback)
+    def register(self, event, level, callback):
+        self._logger.info(f"registered event '{event}' at level '{level}' with callback: {callback}")
+        self._createListenerLevelIfNeeded(level)
+        self._createListenerListIfNeeded(event, level)
+        self._listeners[level][event].append(callback)
         
-    def fire(self, event, *args, **kwargs):
-        self._logger.info("firing event '{}' with args: {}, kwargs: {}".format(
-            event,
-            str(args),
-            str(kwargs)
-        ))
-        if self._doesEventHaveAList(event):
-            for callback in self._listeners[event]:
+    def fire(self, event, level, *args, **kwargs):
+        self._logger.info(f"firing event '{event}' at level '{level}' with args: {args}, kwargs: {kwargs}")
+        if self._doesEventHaveALevel(level) and self._doesEventHaveAList(event, level):
+            for callback in self._listeners[level][event]:
                 if asyncio.iscoroutinefunction(callback):
                     asyncio.create_task(callback(*args, **kwargs))
                 else:
                     callback(*args, **kwargs)
+                    
+    def _createListenerLevelIfNeeded(self, level):
+        if not self._doesEventHaveALevel(level):
+            self._listeners[level] = {}
 
-    def _createListenerListIfNeeded(self, event):
-        if not self._doesEventHaveAList(event):
-            self._listeners[event] = []
-            
-    def _doesEventHaveAList(self, event):
-        return event in self._listeners
+    def _createListenerListIfNeeded(self, event, level):
+        if not self._doesEventHaveAList(event, level):
+            self._listeners[level][event] = []
+      
+    def _doesEventHaveAList(self, event, level):
+        return event in self._listeners[level]
+        
+    def _doesEventHaveALevel(self, level):
+        return level in self._listeners

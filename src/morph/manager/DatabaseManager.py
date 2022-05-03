@@ -15,14 +15,14 @@ class DatabaseManager:
         
     def _initializeMongoDatabase(self, params):
         self._logger.debug("_initializeMongoDatabase called. params: {}".format(str(params)))
-        from .database.MongoDatabase import MongoDatabase
+        from morph.database.MongoDatabase import MongoDatabase
         params['port'] = int(params['port'])
         params['logger'] = self._logger.getChild('MongoDatabase')
         self._database = MongoDatabase(**params)
         
     def _initializeVirtualDatabase(self, params):
         self._logger.debug("_initializeVirtualDatabase called. params: {}".format(str(params)))
-        from .database.VirtualDatabase import VirtualDatabase
+        from morph.database.VirtualDatabase import VirtualDatabase
         params['logger'] = self._logger.getChild('VirtualDatabase')
         self._database = VirtualDatabase(**params)
 

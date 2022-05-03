@@ -72,7 +72,7 @@ class MessageProcessor:
                 "channel_id" : channel_id,
                 "message" : message
             }
-            self._environment.fireEvent('send', **params)
+            self._environment.fireEventAtSelf('send', **params)
         
 
 

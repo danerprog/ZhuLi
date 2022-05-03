@@ -1,8 +1,8 @@
-from manager.ComponentManager import ComponentManager
-from manager.ConfigurationManager import ConfigurationManager
-from manager.DatabaseManager import DatabaseManager
-from manager.EventListenerManager import EventListenerManager
-from manager.LoggingManager import LoggingManager
+from .manager.ComponentManager import ComponentManager
+from .manager.ConfigurationManager import ConfigurationManager
+from .manager.DatabaseManager import DatabaseManager
+from .manager.EventListenerManager import EventListenerManager
+from .manager.LoggingManager import LoggingManager
 
 import logging
 
@@ -16,9 +16,9 @@ class Environment:
             self._component_level = component_level
             self._parent = parent_environment
             self._logger = self._parent.getLogger(f"{self.__class__.__name__}.{component_name}[{component_level}]")
-            self._event_listener_manager = EventListenerManager(self._logger)
             self._component_manager = self._parent.getComponentManager()
             self._component_manager.registerComponentAtLevel(component_name, component_level)
+            self._event_listener_manager = EventListenerManager(self._logger)
             self._logger.info("Environment shard created.")
             
         def configuration(self):
@@ -37,14 +37,23 @@ class Environment:
             return self._parent.getConfiguration(configuration_file_name)
             
         def registerCallback(self, event, callback):
-            self._event_listener_manager.register(event, callback)
+            self._event_listener_manager.register(event, self._component_level, callback)
+            self._parent.registerCallback(event, self._component_level, callback)
+  
+        def fireEvent(self, event, level, *args, **kwargs):
+            if level == "self":
+                self._event_listener_manager.fire(event, self._component_level, *args, **kwargs)
+            else:
+                self._parent.fireEvent(event, level, *args, **kwargs)
+                
+        def fireEventAtSelf(self, event, *args, **kwargs):
+            self.fireEvent(event, 'self', *args, **kwargs)
             
-        def fireEvent(self, event, *args, **kwargs):
-            self._event_listener_manager.fire(event, *args, **kwargs)
+        def fireEventAtBackend(self, event, *args, **kwargs):
+            self.fireEvent(event, ComponentManager.LEVEL['backend'], *args, **kwargs)
             
-        def fireAndPropagateEvent(self, event, *args, **kwargs):
-            self.fireEvent(event, *args, **kwargs)
-            self._parent.fireEvent(event, *args, **kwargs)
+        def fireEventAtInterface(self, event, *args, **kwargs):
+            self.fireEvent(event, ComponentManager.LEVEL['interface'], *args, **kwargs)
             
         def initialize(component_name, component_level):
             environment = Environment.instance()
@@ -60,7 +69,7 @@ class Environment:
     SHARDS = {}
     
     def __init__(self, config_directory = None):
-        print(">>> Initializing environment. config_directory: " + config_directory)
+        print(f">>> Initializing environment. config_directory: {config_directory}")
         self._initializeConfigurationManager(config_directory)
         self._initializeLoggingManager()
         self._initializeEventListenerManager()
@@ -85,11 +94,11 @@ class Environment:
     def getConfiguration(self, name):
         return self.configuration().getConfiguration(name)
         
-    def registerCallback(self, event, callback):
-        self._event_listener_manager.register(event, callback)
+    def registerCallback(self, event, level, callback):
+        self._event_listener_manager.register(event, level, callback)
         
-    def fireEvent(self, event, *args, **kwargs):
-        self._event_listener_manager.fire(event, *args, **kwargs)
+    def fireEvent(self, event, level, *args, **kwargs):
+        self._event_listener_manager.fire(event, level, *args, **kwargs)
         
     def _initializeConfigurationManager(self, config_directory):
         self._configuration_manager = ConfigurationManager.instance(config_directory)
