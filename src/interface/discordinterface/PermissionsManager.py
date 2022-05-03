@@ -2,9 +2,10 @@
 
 class PermissionsManager:
 
-    def __init__(self, permissions_database, logger):
+    def __init__(self, environment, logger):
         self._logger = logger.getChild(self.__class__.__name__)
-        self._database = permissions_database
+        self._environment = environment
+        self._database = self._environment.database()['discordinterface']
         self._logger.info("initialized")
         
     def addEventPermissionsForRole(self, event, role_id, guild_id):
@@ -92,7 +93,7 @@ class PermissionsManager:
         return self._database[str(guild_id)]['users'].query({'permissions': event})
         
     def _isEventTriggerableByAUser(self, event):
-        return event == "start" or event == "stop" or event == "restart" or event == "status" or event == "add" or event == "remove" or event == "list"
+        return (event in self._environment.getBackendRegisteredEvents() or event in ['add', 'remove', 'list'])
         
     def _doesRoleIdExistInDatabase(self, role_id, guild_id):
         return self._database[str(guild_id)]['roles'].count({'id': role_id}) > 0

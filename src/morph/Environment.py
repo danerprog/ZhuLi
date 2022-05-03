@@ -36,6 +36,15 @@ class Environment:
         def getConfiguration(self, configuration_file_name):
             return self._parent.getConfiguration(configuration_file_name)
             
+        def getSelfRegisteredEvents(self):
+            return self._event_listener_manager.getAllEvents()
+            
+        def getBackendRegisteredEvents(self):
+            return self._parent.getRegisteredEventsOnLevel(ComponentManager.LEVEL['backend'])
+            
+        def getInterfaceRegisteredEvents(self):
+            return self._parent.getRegisteredEventsOnLevel(ComponentManager.LEVEL['interface'])
+            
         def registerCallback(self, event, callback):
             self._event_listener_manager.register(event, self._component_level, callback)
             self._parent.registerCallback(event, self._component_level, callback)
@@ -93,6 +102,9 @@ class Environment:
         
     def getConfiguration(self, name):
         return self.configuration().getConfiguration(name)
+    
+    def getRegisteredEventsOnLevel(self, level):
+        return self._event_listener_manager.getEventsOnLevel(level)
         
     def registerCallback(self, event, level, callback):
         self._event_listener_manager.register(event, level, callback)

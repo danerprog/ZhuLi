@@ -11,7 +11,7 @@ class DiscordInterface(discord.Client, MainComponent):
         discord.Client.__init__(self)
         MainComponent.__init__(self)
         self._permissions_manager = PermissionsManager(
-            self._environment.database()['discordinterface'],
+            self._environment,
             self._logger
         )
         self._message_processor = MessageProcessor(

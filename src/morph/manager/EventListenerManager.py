@@ -21,6 +21,18 @@ class EventListenerManager:
                 else:
                     callback(*args, **kwargs)
                     
+    def getEventsOnLevel(self, level):
+        events = []
+        if level in self._listeners:
+            events = self._listeners[level].keys()
+        return events
+        
+    def getAllEvents(self):
+        events = set()
+        for level in self._listeners.keys():
+            events.update(self.getEventsOnLevel(level))
+        return events
+                    
     def _createListenerLevelIfNeeded(self, level):
         if not self._doesEventHaveALevel(level):
             self._listeners[level] = {}

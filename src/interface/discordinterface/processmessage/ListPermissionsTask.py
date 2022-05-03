@@ -15,16 +15,18 @@ class ListPermissionsTask(MessageTask):
         await self._listPermissions()
         
     def _initializeMemberVariables(self):
+        self._environment = self._context['environment']
         self._events = self._context['preprocessed_message'].tokens()[2:]
         self._guild = self._context['preprocessed_message'].raw().guild
         self._permissions_manager = self._context['permissions_manager']
         self._task = None
-        
+        self._initializeListOfPossibleEvents()
+
     async def _listPermissions(self):
         self._logger.debug("_listPermissions called.")
         events_to_list = self._events
         if events_to_list is None or len(events_to_list) <= 0:
-            events_to_list = self._getListOfPossibleEvents()
+            events_to_list = self._list_of_possible_events
         self._reply = await self._getPermissionMessagesFor(events_to_list)
         self._logger.debug("_listPermissions done.")
             
@@ -62,12 +64,7 @@ class ListPermissionsTask(MessageTask):
             })
         self._logger.debug(f"_getPermissionsMessageFor called. message: {message}")
         return message
-        
-    def _getListOfPossibleEvents(self):
-        list_of_possible_events = ["start", "stop", "restart", "status", "add", "remove", "list"]
-        self._logger.debug(f"getting list of possible events: {list_of_possible_events}")
-        return list_of_possible_events
-        
+
     async def _getUserPermissionsInStringFor(self, event):
         self._logger.debug(f"_getUserPermissionsInStringFor called. event: {event}")
         users = self._permissions_manager.getUsersWithEventPermissions(event, self._guild.id)
@@ -98,3 +95,8 @@ class ListPermissionsTask(MessageTask):
             self._logger.debug(f"stringifying role: {role}")
             role_names.append(self._guild.get_role(role['id']).name)
         return "\n".join(role_names)
+        
+    def _initializeListOfPossibleEvents(self):
+        self._list_of_possible_events = set()
+        self._list_of_possible_events.update(self._environment.getBackendRegisteredEvents())
+        self._list_of_possible_events.update(['add', 'remove', 'list'])
