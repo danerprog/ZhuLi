@@ -93,7 +93,7 @@ class PermissionsManager:
         return self._database[str(guild_id)]['users'].query({'permissions': event})
         
     def _isEventTriggerableByAUser(self, event):
-        return (event in self._environment.getBackendRegisteredEvents() or event in ['add', 'remove', 'list'])
+        return event in ['start', 'stop', 'restart', 'status', 'add', 'remove', 'list']
         
     def _doesRoleIdExistInDatabase(self, role_id, guild_id):
         return self._database[str(guild_id)]['roles'].count({'id': role_id}) > 0

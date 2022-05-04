@@ -54,10 +54,10 @@ class MessageProcessor:
         reply = task.reply()
         if reply is not None:
             if isinstance(reply, dict):
-                self._fireSendEventIfNeeded(reply, channel_id)
+                self._sendMessageToSelfIfNeeded(reply, channel_id)
             elif isinstance(reply, list):
                 for reply_message in reply:
-                    self._fireSendEventIfNeeded(reply_message, channel_id)
+                    self._sendMessageToSelfIfNeeded(reply_message, channel_id)
             else:
                 self._logger.warning(f"unrecognized reply type: {type(reply)}. no reply will be sent")
         
@@ -66,13 +66,19 @@ class MessageProcessor:
             self._logger.debug("task not yet complete. sleeping...")
             await asyncio.sleep(1)
 
-    def _fireSendEventIfNeeded(self, message, channel_id):
-        if message is not None:
-            params = {
-                "channel_id" : channel_id,
-                "message" : message
+    def _sendMessageToSelfIfNeeded(self, message_to_user, channel_id):
+        if message_to_user is not None:
+            message_to_self = {
+                'target' : self._environment.getComponentInfo(),
+                'parameters' : {
+                    'command' : 'send',
+                    'kwargs' : {
+                        "channel_id" : channel_id,
+                        "message" : message_to_user
+                    }
+                }
             }
-            self._environment.fireEventAtSelf('send', **params)
+            self._environment.sendMessage(message_to_self)
         
 
 

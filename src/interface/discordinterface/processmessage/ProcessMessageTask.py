@@ -2,8 +2,8 @@ from .AddEventTask import AddEventTask
 from .ListEventTask import ListEventTask
 from .MessageTask import MessageTask
 from .RemoveEventTask import RemoveEventTask
-
 from .ShouldMessageBeProcessedTask import ShouldMessageBeProcessedTask
+from morph import EventConstants
 
 
 class ProcessMessageTask(MessageTask):
@@ -47,5 +47,13 @@ class ProcessMessageTask(MessageTask):
             "bot_name" : self._context['preprocessed_message'].token(1),
             "channel_id" : self._context['preprocessed_message'].raw().channel.id
         }
-        self._context['environment'].fireEventAtBackend(event, **kwargs)
+        event = {
+            'type' : EventConstants.TYPES['user_input'],
+            'trigger' : EventConstants.TRIGGERS['user'],
+            'parameters' : {
+                'command' : event,
+                'kwargs' : kwargs
+            }
+        }
+        self._context['environment'].fireEvent(event)
 

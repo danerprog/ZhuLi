@@ -1,7 +1,6 @@
 from .manager.ComponentManager import ComponentManager
 from .manager.ConfigurationManager import ConfigurationManager
 from .manager.DatabaseManager import DatabaseManager
-from .manager.EventListenerManager import EventListenerManager
 from .manager.LoggingManager import LoggingManager
 
 import logging
@@ -11,14 +10,13 @@ class Environment:
 
     class Shard:
         
-        def __init__(self, component_name, component_level, parent_environment):
-            self._component_name = component_name
-            self._component_level = component_level
-            self._parent = parent_environment
-            self._logger = self._parent.getLogger(f"{self.__class__.__name__}.{component_name}[{component_level}]")
+        def __init__(self, **parameters):
+            self._component_id = parameters['component_id']
+            self._component_name = parameters['component_name']
+            self._component_level = parameters['component_level']
+            self._parent = parameters['parent_environment']
+            self._logger = self._parent.getLogger(f"{self.__class__.__name__}[{self._component_name}]")
             self._component_manager = self._parent.getComponentManager()
-            self._component_manager.registerComponentAtLevel(component_name, component_level)
-            self._event_listener_manager = EventListenerManager(self._logger)
             self._logger.info("Environment shard created.")
             
         def configuration(self):
@@ -29,6 +27,9 @@ class Environment:
             
         def logger(self):
             return self._parent.logger()
+            
+        def register(self, component):
+            self._component_manager.register(component)
 
         def getLogger(self, logger_name = None):
             return self._parent.getLogger(logger_name)
@@ -36,42 +37,34 @@ class Environment:
         def getConfiguration(self, configuration_file_name):
             return self._parent.getConfiguration(configuration_file_name)
             
-        def getSelfRegisteredEvents(self):
-            return self._event_listener_manager.getAllEvents()
-            
-        def getBackendRegisteredEvents(self):
-            return self._parent.getRegisteredEventsOnLevel(ComponentManager.LEVEL['backend'])
-            
-        def getInterfaceRegisteredEvents(self):
-            return self._parent.getRegisteredEventsOnLevel(ComponentManager.LEVEL['interface'])
-            
-        def registerCallback(self, event, callback):
-            self._event_listener_manager.register(event, self._component_level, callback)
-            self._parent.registerCallback(event, self._component_level, callback)
-  
-        def fireEvent(self, event, level, *args, **kwargs):
-            if level == "self":
-                self._event_listener_manager.fire(event, self._component_level, *args, **kwargs)
-            else:
-                self._parent.fireEvent(event, level, *args, **kwargs)
-                
-        def fireEventAtSelf(self, event, *args, **kwargs):
-            self.fireEvent(event, 'self', *args, **kwargs)
-            
-        def fireEventAtBackend(self, event, *args, **kwargs):
-            self.fireEvent(event, ComponentManager.LEVEL['backend'], *args, **kwargs)
-            
-        def fireEventAtInterface(self, event, *args, **kwargs):
-            self.fireEvent(event, ComponentManager.LEVEL['interface'], *args, **kwargs)
-            
-        def initialize(component_name, component_level):
+        def getComponentInfo(self):
+            return {
+                'component_id' : self._component_id,
+                'component_name' : self._component_name,
+                'component_level' : self._component_level
+            }
+
+        def sendMessage(self, message):
+            message['sender'] = self.getComponentInfo()
+            self._component_manager.sendMessage(message)
+
+        def fireEvent(self, event):
+            event['origin'] = self.getComponentInfo()
+            self._component_manager.fireEvent(event)
+
+        def initialize(component_id, component_name, component_level):
             environment = Environment.instance()
             if environment is None:
                 print(">>> No environment instance found! No shard will be created.")
             else:
                 if component_name in Environment.SHARDS:
-                    print(f">>> Reinitializing shard. component_name: {component_name}, component_level: {component_level}")
-                Environment.SHARDS[component_name] = Environment.Shard(component_name, component_level, environment)
+                    print(f">>> Reinitializing shard. component_id: {component_id}, component_name: {component_name}, component_level: {component_level}")
+                Environment.SHARDS[component_name] = Environment.Shard(**{
+                    'component_id' : component_id,
+                    'component_name' : component_name,
+                    'component_level' : component_level,
+                    'parent_environment' : environment
+                })
 
 
     INSTANCE = None
@@ -81,7 +74,6 @@ class Environment:
         print(f">>> Initializing environment. config_directory: {config_directory}")
         self._initializeConfigurationManager(config_directory)
         self._initializeLoggingManager()
-        self._initializeEventListenerManager()
         self._initializeDatabaseManager()
         self._initializeComponentManager()
 
@@ -102,16 +94,7 @@ class Environment:
         
     def getConfiguration(self, name):
         return self.configuration().getConfiguration(name)
-    
-    def getRegisteredEventsOnLevel(self, level):
-        return self._event_listener_manager.getEventsOnLevel(level)
-        
-    def registerCallback(self, event, level, callback):
-        self._event_listener_manager.register(event, level, callback)
-        
-    def fireEvent(self, event, level, *args, **kwargs):
-        self._event_listener_manager.fire(event, level, *args, **kwargs)
-        
+
     def _initializeConfigurationManager(self, config_directory):
         self._configuration_manager = ConfigurationManager.instance(config_directory)
         self._configuration_manager.parseFile("main")
@@ -127,10 +110,7 @@ class Environment:
 
     def _initializeComponentManager(self):
         self._component_manager = ComponentManager(self.getLogger())
-        
-    def _initializeEventListenerManager(self):
-        self._event_listener_manager = EventListenerManager(self.getLogger())
-        
+
     def _initializeLoggingManager(self):
         main_configuration = self.configuration()["main"]
         self._logging_manager = LoggingManager(

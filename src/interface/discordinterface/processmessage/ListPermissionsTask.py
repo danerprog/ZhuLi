@@ -97,6 +97,4 @@ class ListPermissionsTask(MessageTask):
         return "\n".join(role_names)
         
     def _initializeListOfPossibleEvents(self):
-        self._list_of_possible_events = set()
-        self._list_of_possible_events.update(self._environment.getBackendRegisteredEvents())
-        self._list_of_possible_events.update(['add', 'remove', 'list'])
+        self._list_of_possible_events = ['start', 'stop', 'restart', 'status', 'add', 'remove', 'list']

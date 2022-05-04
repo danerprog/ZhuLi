@@ -1,4 +1,5 @@
 from .Bot import Bot
+from morph import EventConstants
 from morph.MainComponent import MainComponent
 
 import os
@@ -8,7 +9,15 @@ class BatchFileManager(MainComponent):
     def __init__(self):
         super().__init__()
         self._initializeBots()
-        self._registerCallbacks()
+        
+    async def processMessage(self, received_message):
+        self._logger.info(f"Received message. received_message: {received_message}")
+        parameters = received_message['parameters']
+        
+    async def processEvent(self, event):
+        self._logger.info(f"Received event. event: {event}")
+        if event['type'] == EventConstants.TYPES['user_input']:
+            self._processUserInput(event['parameters'])
         
     def start(self, *args, **kwargs):
         self._logger.info("start called. kwargs: " + str(kwargs))
@@ -122,7 +131,15 @@ class BatchFileManager(MainComponent):
         
     def _sendMessage(self, message, **out_kwargs):
         out_kwargs["message"] = message
-        self._environment.fireEvent("send", **out_kwargs)
+        self._environment.sendMessage({
+            'target' : {
+                'component_level' : 'interface'
+            },
+            'parameters' : {
+                'command' : 'send',
+                'kwargs' : out_kwargs
+            }
+        })
 
     def _initializeBots(self):
         self._logger.info("initializing bots...")
@@ -143,10 +160,17 @@ class BatchFileManager(MainComponent):
             batch_file_directory + batch_file,
             self._environment.getLogger("Bot").getChild(batch_filename)
         ))
-        
-    def _registerCallbacks(self):
-        self._environment.registerCallback("start", self.start)
-        self._environment.registerCallback("stop", self.stop)
-        self._environment.registerCallback("restart", self.restart)
-        self._environment.registerCallback("status", self.status)
+
+    def _processUserInput(self, parameters):
+        command = None if 'command' not in parameters else parameters['command']
+        if command == 'start':
+            self.start(**parameters['kwargs'])
+        elif command == 'stop':
+            self.stop(**parameters['kwargs'])
+        elif command == 'restart':
+            self.restart(**parameters['kwargs'])
+        elif command == 'status':
+            self.status(**parameters['kwargs'])
+        else:
+            self._logger.warning(f"Unrecognized command '{command}'! parameters: {parameters}")
         

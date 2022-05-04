@@ -2,6 +2,7 @@ from .MessageProcessor import MessageProcessor
 from .PermissionsManager import PermissionsManager
 from morph.MainComponent import MainComponent
 
+import asyncio
 import discord
 
 
@@ -25,11 +26,16 @@ class DiscordInterface(discord.Client, MainComponent):
     async def on_ready(self):
         self._logger.info("on_ready called")
         self._prepareOwnerPermissions()
-        self._registerCallbacks()
  
     async def on_message(self, message):
         self._logger.info("on_message called. message.content: " + message.content)
         self._message_processor.process(message)
+        
+    async def processMessage(self, received_message):
+        self._logger.info(f"Received message. received_message: {received_message}")
+        parameters = received_message['parameters']
+        if 'command' in parameters:
+            self._processCommand(parameters)
             
     async def sendMessage(self, *args, **kwargs):
         self._logger.info("sending message. args: {}, kwargs: {}".format(
@@ -39,6 +45,12 @@ class DiscordInterface(discord.Client, MainComponent):
         message = kwargs["message"]
         channel = self.get_channel(int(kwargs["channel_id"]))
         await channel.send(embed = self._convertToEmbed(message))
+        
+    def _processCommand(self, parameters):
+        if parameters['command'] == 'send':
+            asyncio.create_task(self.sendMessage(**parameters['kwargs']))
+        else:
+            self._logger.warning(f"Unrecognized command '{parameters['command']}'!")
         
     def _prepareOwnerPermissions(self):
         id = int(self._environment.getConfiguration("main")["Discord"]["ownerid"])
@@ -74,5 +86,4 @@ class DiscordInterface(discord.Client, MainComponent):
         ))
         return value
         
-    def _registerCallbacks(self):
-        self._environment.registerCallback("send", self.sendMessage)
+    
