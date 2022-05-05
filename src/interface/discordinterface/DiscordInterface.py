@@ -1,5 +1,6 @@
 from .MessageProcessor import MessageProcessor
 from .PermissionsManager import PermissionsManager
+from morph import EventConstants
 from morph.MainComponent import MainComponent
 
 import asyncio
@@ -20,22 +21,38 @@ class DiscordInterface(discord.Client, MainComponent):
             self._environment,
             self._logger
         )
+        self._ready_flags = {
+            'is_discord_client_ready' : False,
+            'is_database_ready' : False,
+            'are_owner_permissions_set' : False
+        }
         asyncio.create_task(self.start(self._environment.configuration()["main"]["Discord"]["token"]))
         self._logger.debug("instantiated")
         
     async def on_ready(self):
         self._logger.info("on_ready called")
-        self._prepareOwnerPermissions()
+        self._ready_flags['is_discord_client_ready'] = True
  
     async def on_message(self, message):
         self._logger.info("on_message called. message.content: " + message.content)
-        self._message_processor.process(message)
+        if self._isComponentReadyToReceiveMessages():
+            self._message_processor.process(message)
+        else:
+            self._logger.warning(f"not yet ready to receive messages! dropping message. ready_flags: {self._ready_flags}")
         
     async def processMessage(self, received_message):
         self._logger.info(f"Received message. received_message: {received_message}")
         parameters = received_message['parameters']
-        if 'command' in parameters:
+        if self._isComponentReadyToReceiveMessages():
             self._processCommand(parameters)
+        else:
+            self._logger.warning(f"not yet ready to receive messages! dropping message. ready_flags: {self._ready_flags}")
+
+    async def processEvent(self, event):
+        self._logger.info(f"Received event: {event}.")
+        if event['type'] == EventConstants.TYPES['database_ready']:
+            self._ready_flags['is_database_ready'] = True
+            self._prepareOwnerPermissions()
             
     async def sendMessage(self, *args, **kwargs):
         self._logger.info("sending message. args: {}, kwargs: {}".format(
@@ -51,12 +68,16 @@ class DiscordInterface(discord.Client, MainComponent):
             asyncio.create_task(self.sendMessage(**parameters['kwargs']))
         else:
             self._logger.warning(f"Unrecognized command '{parameters['command']}'!")
-        
+            
+    def _isComponentReadyToReceiveMessages(self):
+        return False not in self._ready_flags.values()
+            
     def _prepareOwnerPermissions(self):
         id = int(self._environment.getConfiguration("main")["Discord"]["ownerid"])
         if not self._permissions_manager.isUserAnOwner(id):
             self._permissions_manager.removeOwners()
             self._permissions_manager.addUserAsOwner(id)
+        self._ready_flags['are_owner_permissions_set'] = True
 
     def _convertToEmbed(self, message):
         embed = discord.Embed()
