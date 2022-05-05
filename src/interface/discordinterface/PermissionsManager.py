@@ -2,10 +2,10 @@
 
 class PermissionsManager:
 
-    def __init__(self, environment, logger):
+    def __init__(self, environment, database, logger):
         self._logger = logger.getChild(self.__class__.__name__)
         self._environment = environment
-        self._database = self._environment.database()['discordinterface']
+        self._database = database
         self._list_of_possible_events = ['start', 'stop', 'restart', 'status', 'add', 'remove', 'list']
         self._logger.info("initialized")
         

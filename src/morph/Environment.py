@@ -1,6 +1,5 @@
 from .manager.ComponentManager import ComponentManager
 from .manager.ConfigurationManager import ConfigurationManager
-from .manager.DatabaseManager import DatabaseManager
 from .manager.LoggingManager import LoggingManager
 
 import logging
@@ -17,19 +16,23 @@ class Environment:
             self._parent = parameters['parent_environment']
             self._logger = self._parent.getLogger(f"{self.__class__.__name__}[{self._component_name}]")
             self._component_manager = self._parent.getComponentManager()
+            self.setDatabase(None)
             self._logger.info("Environment shard created.")
             
         def configuration(self):
             return self._parent.configuration()
             
         def database(self):
-            return self._parent.database()
+            return self._database
             
         def logger(self):
             return self._parent.logger()
             
         def register(self, component):
             self._component_manager.register(component)
+            
+        def setDatabase(self, database):
+            self._database = database
 
         def getLogger(self, logger_name = None):
             return self._parent.getLogger(logger_name)
@@ -72,20 +75,20 @@ class Environment:
     
     def __init__(self, config_directory = None):
         print(f">>> Initializing environment. config_directory: {config_directory}")
+        self._database = None
         self._initializeConfigurationManager(config_directory)
         self._initializeLoggingManager()
-        self._initializeDatabaseManager()
         self._initializeComponentManager()
 
     def configuration(self):
         return self._configuration_manager
         
     def database(self):
-        return self._database_manager.get()
+        return self._database
         
     def logger(self):
         return self._logging_manager
-        
+
     def getComponentManager(self):
         return self._component_manager
 
@@ -102,15 +105,6 @@ class Environment:
         self._configuration_manager = ConfigurationManager.instance(config_directory)
         self._configuration_manager.parseFile("main")
     
-    def _initializeDatabaseManager(self):
-        main_configuration = self.configuration()["main"]
-        database_configuration = main_configuration["Database"]
-        database_configuration["name"] = main_configuration["App"]["name"]
-        self._database_manager = DatabaseManager(
-            self.getLogger("DatabaseManager"),
-            **database_configuration
-        )
-
     def _initializeComponentManager(self):
         self._component_manager = ComponentManager(self.getLogger())
 

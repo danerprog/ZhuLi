@@ -1,5 +1,8 @@
 from .ComponentMessage import ComponentMessage
 from .Environment import Environment
+from .Event import Event
+from .Message import Message
+from . import EventConstants
 from . import MessageStatus
 
 
@@ -22,22 +25,29 @@ class MainComponent:
             is_equal = self._isDescribedByDictionary(other)
         return is_equal
  
-    async def processMessage(self, received_message):
-        log_message = "processMessage is not implemented."
-        self._logger.debug(f"{log_message}. received_message: {received_message}")
-        if received_message['status'] != MessageStatus.WARNING['process_message_not_implemented']:
-            reply_message = ComponentMessage(self._logger)
-            reply_message['status'] = MessageStatus.WARNING['process_message_not_implemented']
-            reply_message['target'] = {
-                'component_id' : received_message['sender']['component_id']
-            }
-            reply_message['kwargs'] = {
-                'message' : log_message
-            }
-            self.sendMessage(reply_message)
+    async def processMessage(self, message):
+        self._logger.info(f"Message received. message: {message}")
+        was_message_processed = True
+        if isinstance(message, Message):
+            parameters = message['parameters']
+            if parameters['command'] == 'set_database':
+                self._onSetDatabase(parameters['database'])
+        else:
+            self._logger.warning(f"Unknown message type received. type: {type(message)}")
+            was_message_processed = False
+        return was_message_processed
 
     async def processEvent(self, event):
-        self._logger.debug(f"processEvent is not implemented. doing nothing. event: {event}")
+        self._logger.info(f"Event received. event: {event}")
+        was_event_processed = True
+        if isinstance(event, Event):
+            if event['type'] == EventConstants.TYPES['database_status']:
+                if event['parameters']['status'] == "online":
+                    self._sendDatabaseRequest(event['origin'])
+        else:
+            self._logger.warning(f"Unknown event type received. type: {type(event)}")
+            was_event_processed = False
+        return was_event_processed
         
     def _initializeId(self):
         self._main_component_id = MainComponent.NEXT_COMPONENT_ID
@@ -75,3 +85,14 @@ class MainComponent:
             results.append(self._component_level == dictionary['component_level'])
         self._logger.debug(f"_isDescribedByDictionary called. results: {results}")
         return len(results) > 0 and False not in results
+        
+    def _sendDatabaseRequest(self, origin):
+        message = Message()
+        message['target'] = origin
+        message['parameters'] = {
+            'command' : 'request_database',
+        }
+        self._environment.sendMessage(message)
+        
+    def _onSetDatabase(self, new_database):
+        self._environment.setDatabase(new_database)

@@ -4,6 +4,7 @@ from .MessageTask import MessageTask
 from .RemoveEventTask import RemoveEventTask
 from .ShouldMessageBeProcessedTask import ShouldMessageBeProcessedTask
 from morph import EventConstants
+from morph.Event import Event
 
 
 class ProcessMessageTask(MessageTask):
@@ -43,16 +44,14 @@ class ProcessMessageTask(MessageTask):
 
     def _fireEvent(self, event):
         self._logger.info(f"firing '{event}'.")
-        kwargs = {
-            "bot_name" : self._context['preprocessed_message'].token(1),
-            "channel_id" : self._context['preprocessed_message'].raw().channel.id
-        }
-        event = {
-            'type' : EventConstants.TYPES['user_input'],
-            'parameters' : {
-                'command' : event,
-                'kwargs' : kwargs
+        event_to_fire = Event()
+        event_to_fire['type'] = EventConstants.TYPES['user_input']
+        event_to_fire['parameters'] = {
+            'command' : event,
+            'kwargs' : {
+                "bot_name" : self._context['preprocessed_message'].token(1),
+                "channel_id" : self._context['preprocessed_message'].raw().channel.id
             }
         }
-        self._context['environment'].fireEvent(event)
+        self._context['environment'].fireEvent(event_to_fire)
 

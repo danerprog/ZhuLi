@@ -5,5 +5,7 @@ TYPES = {
     'components_loaded' : 'components_loaded',
     'shutdown' : 'shutdown',
     'restart' : 'restart',
-    'database_ready' : 'database_ready'
+    'database_status' : 'database_status',
+
+    'invalid' : 'invalid',
 }

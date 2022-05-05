@@ -1,6 +1,7 @@
 from .Bot import Bot
 from morph import EventConstants
 from morph.MainComponent import MainComponent
+from morph.Message import Message
 
 import os
 
@@ -129,17 +130,17 @@ class BatchFileManager(MainComponent):
         message["level"] = "info"
         self._sendMessage(message, **in_kwargs)
         
-    def _sendMessage(self, message, **out_kwargs):
-        out_kwargs["message"] = message
-        self._environment.sendMessage({
-            'target' : {
-                'component_level' : 'interface'
-            },
-            'parameters' : {
-                'command' : 'send',
-                'kwargs' : out_kwargs
-            }
-        })
+    def _sendMessage(self, message_to_user, **out_kwargs):
+        out_kwargs["message"] = message_to_user
+        message = Message()
+        message['target'] = {
+            'component_level' : 'interface'
+        }
+        message['parameters'] = {
+            'command' : 'send',
+            'kwargs' : out_kwargs
+        }
+        self._environment.sendMessage(message)
 
     def _initializeBots(self):
         self._logger.info("initializing bots...")

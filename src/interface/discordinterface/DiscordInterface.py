@@ -12,19 +12,11 @@ class DiscordInterface(discord.Client, MainComponent):
     def __init__(self):
         discord.Client.__init__(self)
         MainComponent.__init__(self)
-        self._permissions_manager = PermissionsManager(
-            self._environment,
-            self._logger
-        )
-        self._message_processor = MessageProcessor(
-            self._permissions_manager,
-            self._environment,
-            self._logger
-        )
         self._ready_flags = {
             'is_discord_client_ready' : False,
             'is_database_ready' : False,
-            'are_owner_permissions_set' : False
+            'are_owner_permissions_set' : False,
+            'is_interface_fully_initialized' : False
         }
         asyncio.create_task(self.start(self._environment.configuration()["main"]["Discord"]["token"]))
         self._logger.debug("instantiated")
@@ -38,23 +30,18 @@ class DiscordInterface(discord.Client, MainComponent):
         if self._isComponentReadyToReceiveMessages():
             self._message_processor.process(message)
         else:
-            self._logger.warning(f"not yet ready to receive messages! dropping message. ready_flags: {self._ready_flags}")
+            self._logger.warning(f"not yet ready to receive messages! dropping discord message. ready_flags: {self._ready_flags}")
         
     async def processMessage(self, received_message):
-        self._logger.info(f"Received message. received_message: {received_message}")
-        parameters = received_message['parameters']
-        if self._isComponentReadyToReceiveMessages():
-            self._processCommand(parameters)
-        else:
-            self._logger.warning(f"not yet ready to receive messages! dropping message. ready_flags: {self._ready_flags}")
-
-    async def processEvent(self, event):
-        self._logger.info(f"Received event: {event}.")
-        if event['type'] == EventConstants.TYPES['database_ready']:
-            self._ready_flags['is_database_ready'] = True
-            self._prepareOwnerPermissions()
-            
-    async def sendMessage(self, *args, **kwargs):
+        was_message_processed = await super().processMessage(received_message)
+        if was_message_processed:
+            parameters = received_message['parameters']
+            if self._isComponentReadyToReceiveMessages():
+                self._processCommand(parameters)
+            else:
+                self._logger.warning(f"not yet ready to receive messages! dropping morph message. ready_flags: {self._ready_flags}")
+      
+    async def sendMessageToUser(self, *args, **kwargs):
         self._logger.info("sending message. args: {}, kwargs: {}".format(
             str(args),
             str(kwargs)
@@ -65,19 +52,33 @@ class DiscordInterface(discord.Client, MainComponent):
         
     def _processCommand(self, parameters):
         if parameters['command'] == 'send':
-            asyncio.create_task(self.sendMessage(**parameters['kwargs']))
+            asyncio.create_task(self.sendMessageToUser(**parameters['kwargs']))
         else:
             self._logger.warning(f"Unrecognized command '{parameters['command']}'!")
             
     def _isComponentReadyToReceiveMessages(self):
         return False not in self._ready_flags.values()
-            
-    def _prepareOwnerPermissions(self):
+
+    def _prepareOwnerPermissionsIfNeeded(self):
         id = int(self._environment.getConfiguration("main")["Discord"]["ownerid"])
-        if not self._permissions_manager.isUserAnOwner(id):
+        if not self._ready_flags['are_owner_permissions_set'] and not self._permissions_manager.isUserAnOwner(id):
             self._permissions_manager.removeOwners()
             self._permissions_manager.addUserAsOwner(id)
         self._ready_flags['are_owner_permissions_set'] = True
+        
+    def _finishInitializationIfNotYetDone(self):
+        if not self._ready_flags['is_interface_fully_initialized']:
+            self._permissions_manager = PermissionsManager(
+                self._environment,
+                self._environment.database(),
+                self._logger
+            )
+            self._message_processor = MessageProcessor(
+                self._permissions_manager,
+                self._environment,
+                self._logger
+            )
+            self._ready_flags['is_interface_fully_initialized'] = True
 
     def _convertToEmbed(self, message):
         embed = discord.Embed()
@@ -102,5 +103,14 @@ class DiscordInterface(discord.Client, MainComponent):
             str(value)
         ))
         return value
+    
+    def _onSetDatabase(self, new_database):
+        super()._onSetDatabase(new_database)
+        self._ready_flags['is_database_ready'] = new_database is not None
+        if self._ready_flags['is_database_ready']:
+            self._finishInitializationIfNotYetDone()
+            self._prepareOwnerPermissionsIfNeeded()
+
+            
         
     

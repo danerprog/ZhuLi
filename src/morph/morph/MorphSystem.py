@@ -1,5 +1,8 @@
+from .DatabaseManager import DatabaseManager
 from morph import EventConstants
+from morph.Event import Event
 from morph.MainComponent import MainComponent
+from morph.Message import Message
 
 import asyncio
 
@@ -18,6 +21,15 @@ class MorphSystem(MainComponent):
         self._loadBatchFileManager()
         self._loadDiscordInterface()
         self._fireComponentsLoadedEvent()
+        self._loadDatabase()
+        self._fireDatabaseLoadedEvent()
+        
+    async def processMessage(self, message):
+        was_message_processed = await super().processMessage(message)
+        if was_message_processed:
+            parameters = message['parameters']
+            if parameters['command'] == 'request_database':
+                self._sendDatabase(message['sender'])
 
     def _loadBatchFileManager(self):
         import backend.batchfilemanager
@@ -28,10 +40,35 @@ class MorphSystem(MainComponent):
         self._loaded_components['interface'].append('discordinterface')
     
     def _fireComponentsLoadedEvent(self):
-        event = {
-            'type' : EventConstants.TYPES['components_loaded'],
-            'parameters' : {
-                'loaded_components' : self._loaded_components
-            }
+        event = Event()
+        event['type'] = EventConstants.TYPES['components_loaded']
+        event['parameters'] = {
+            'loaded_components' : self._loaded_components
         }
         self._environment.fireEvent(event)
+        
+    def _loadDatabase(self):
+        main_configuration = self._environment.configuration()["main"]
+        database_configuration = main_configuration["Database"]
+        database_configuration["name"] = main_configuration["App"]["name"]
+        self._database_manager = DatabaseManager(
+            self._logger,
+            **database_configuration
+        )
+        
+    def _fireDatabaseLoadedEvent(self):
+        event = Event()
+        event['type'] = EventConstants.TYPES['database_status']
+        event['parameters'] = {
+            'status' : "online"
+        }
+        self._environment.fireEvent(event)
+        
+    def _sendDatabase(self, target):
+        message = Message()
+        message['target'] = target
+        message['parameters'] = {
+            'command' : 'set_database',
+            'database' : self._database_manager.get()[target['component_name']]
+        }
+        self._environment.sendMessage(message)
