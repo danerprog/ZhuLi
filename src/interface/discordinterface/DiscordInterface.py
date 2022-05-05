@@ -54,13 +54,9 @@ class DiscordInterface(discord.Client, MainComponent):
         
     def _prepareOwnerPermissions(self):
         id = int(self._environment.getConfiguration("main")["Discord"]["ownerid"])
-        self._permissions_manager.addEventPermissionsForUser('start', id, 'owner')
-        self._permissions_manager.addEventPermissionsForUser('stop', id, 'owner')
-        self._permissions_manager.addEventPermissionsForUser('restart', id, 'owner')
-        self._permissions_manager.addEventPermissionsForUser('status', id, 'owner')
-        self._permissions_manager.addEventPermissionsForUser('add', id, 'owner')
-        self._permissions_manager.addEventPermissionsForUser('remove', id, 'owner')
-        self._permissions_manager.addEventPermissionsForUser('list', id, 'owner')
+        if not self._permissions_manager.isUserAnOwner(id):
+            self._permissions_manager.removeOwners()
+            self._permissions_manager.addUserAsOwner(id)
 
     def _convertToEmbed(self, message):
         embed = discord.Embed()

@@ -6,6 +6,7 @@ class PermissionsManager:
         self._logger = logger.getChild(self.__class__.__name__)
         self._environment = environment
         self._database = self._environment.database()['discordinterface']
+        self._list_of_possible_events = ['start', 'stop', 'restart', 'status', 'add', 'remove', 'list']
         self._logger.info("initialized")
         
     def addEventPermissionsForRole(self, event, role_id, guild_id):
@@ -92,8 +93,26 @@ class PermissionsManager:
         self._logger.debug(f"getUsersWithEventPermissions called. event: {event}, guild_id: {guild_id}")
         return self._database[str(guild_id)]['users'].query({'permissions': event})
         
+    def addUserAsOwner(self, user_id):
+        if not self.isUserAnOwner(user_id):
+            self._database['owner']['users'].insert({
+                'id' : user_id
+            })
+            self._logger.info(f"user {user_id} is added as an owner.")
+        
+    def removeOwners(self):
+        owners = self._database['owner']['users'].query()
+        for owner in owners:
+            self._database['owner']['users'].remove({
+                'id' : owner['id']
+            })
+            self._logger.info(f"user {owner['id']} is removed as an owner")
+            
+    def isUserAnOwner(self, user_id):
+        return self._doesUserIdExistInDatabase(user_id, 'owner')
+        
     def _isEventTriggerableByAUser(self, event):
-        return event in ['start', 'stop', 'restart', 'status', 'add', 'remove', 'list']
+        return event in self._list_of_possible_events
         
     def _doesRoleIdExistInDatabase(self, role_id, guild_id):
         return self._database[str(guild_id)]['roles'].count({'id': role_id}) > 0

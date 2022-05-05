@@ -53,7 +53,7 @@ class ShouldMessageBeProcessedTask(MessageTask):
         event = self._preprocessed_message.event()
         result = None
         does_user_have_permissions_in_guild = self._permissions_manager.doesUserIdHavePermissionsForEvent(event, self._raw_message.author.id, self._guild_id)
-        is_user_an_owner = self._permissions_manager.doesUserIdHavePermissionsForEvent(event, self._raw_message.author.id, 'owner')
+        is_user_an_owner = self._permissions_manager.isUserAnOwner(self._raw_message.author.id)
 
         if is_user_an_owner or does_user_have_permissions_in_guild:
             result = True
