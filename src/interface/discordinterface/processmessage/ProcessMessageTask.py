@@ -49,7 +49,6 @@ class ProcessMessageTask(MessageTask):
         }
         event = {
             'type' : EventConstants.TYPES['user_input'],
-            'trigger' : EventConstants.TRIGGERS['user'],
             'parameters' : {
                 'command' : event,
                 'kwargs' : kwargs

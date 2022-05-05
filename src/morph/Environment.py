@@ -50,7 +50,7 @@ class Environment:
 
         def fireEvent(self, event):
             event['origin'] = self.getComponentInfo()
-            self._component_manager.fireEvent(event)
+            self._parent.fireEvent(event)
 
         def initialize(component_id, component_name, component_level):
             environment = Environment.instance()
@@ -94,6 +94,9 @@ class Environment:
         
     def getConfiguration(self, name):
         return self.configuration().getConfiguration(name)
+        
+    def fireEvent(self, event):
+        self._component_manager.fireEvent(event)
 
     def _initializeConfigurationManager(self, config_directory):
         self._configuration_manager = ConfigurationManager.instance(config_directory)

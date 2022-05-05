@@ -20,7 +20,7 @@ class DiscordInterface(discord.Client, MainComponent):
             self._environment,
             self._logger
         )
-        self.run(self._environment.configuration()["main"]["Discord"]["token"])
+        asyncio.create_task(self.start(self._environment.configuration()["main"]["Discord"]["token"]))
         self._logger.debug("instantiated")
         
     async def on_ready(self):
