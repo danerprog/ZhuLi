@@ -29,8 +29,9 @@ class DiscordInterface(discord.Client, MainComponent):
         self._logger.info("on_message called. message.content: " + message.content)
         if self._isComponentReadyToReceiveMessages():
             self._message_processor.process(message)
-        else:
+        elif message.author.id != self.user.id:
             self._logger.warning(f"not yet ready to receive messages! dropping discord message. ready_flags: {self._ready_flags}")
+            self._sendNotReadyToReceiveMessageToUser(message.channel.id)
         
     async def processMessage(self, received_message):
         was_message_processed = await super().processMessage(received_message)
@@ -54,7 +55,7 @@ class DiscordInterface(discord.Client, MainComponent):
         if parameters['command'] == 'send':
             asyncio.create_task(self.sendMessageToUser(**parameters['kwargs']))
         else:
-            self._logger.warning(f"Unrecognized command '{parameters['command']}'!")
+            self._logger.info(f"Unrecognized command '{parameters['command']}'!")
             
     def _isComponentReadyToReceiveMessages(self):
         return False not in self._ready_flags.values()
@@ -110,7 +111,35 @@ class DiscordInterface(discord.Client, MainComponent):
         if self._ready_flags['is_database_ready']:
             self._finishInitializationIfNotYetDone()
             self._prepareOwnerPermissionsIfNeeded()
-
+            
+    def _sendNotReadyToReceiveMessageToUser(self, channel_id):
+        message = {
+            'title' : "Message Dropped",
+            'description' : "Bot is not yet ready to receive messages.",
+            'level' : "warning",
+            'fields' : self._getReadyCheckFields()
+        }
+        kwargs = {
+            'message' : message,
+            'channel_id' : channel_id
+        }
+        asyncio.create_task(self.sendMessageToUser(**kwargs))
+        
+    def _getReadyCheckFields(self):
+        ready_check_names = {
+            'name' : "Ready checks",
+            'value' : "",
+            'inline' : True
+        }
+        ready_check_values = {
+            'name' : "Value",
+            'value' : "",
+            'inline' : True
+        }
+        for name, value in self._ready_flags.items():
+            ready_check_names['value'] = f"{ready_check_names['value']}\n{name}"
+            ready_check_values['value'] = f"{ready_check_values['value']}\n{value}"
+        return [ready_check_names, ready_check_values]
             
         
     

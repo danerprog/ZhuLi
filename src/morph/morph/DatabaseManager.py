@@ -1,9 +1,15 @@
+import asyncio
+
 
 class DatabaseManager:
 
     def __init__(self, logger, **database_configuration):
         self._logger = logger.getChild(self.__class__.__name__)
+        self.setCallbackOnDatabaseOnline(self._doNothingCallback)
+        self.setCallbackOnDatabaseOffline(self._doNothingCallback)
+        self._was_database_online = False
         self._initializeDatabase(**database_configuration)
+        asyncio.create_task(self._checkForDatabaseStatusAndRunAppropriateCallback())
         self._logger.info("initialized")
         
     def _initializeDatabase(self, **database_configuration):
@@ -20,3 +26,25 @@ class DatabaseManager:
 
     def get(self):
         return self._database
+        
+    def setCallbackOnDatabaseOnline(self, callback):
+        self._onDatabaseOnline = callback
+        
+    def setCallbackOnDatabaseOffline(self, callback):
+        self._onDatabaseOffline = callback
+
+    async def _checkForDatabaseStatusAndRunAppropriateCallback(self):
+        is_database_online = self._database.isOnline()
+        if is_database_online and not self._was_database_online:
+            self._onDatabaseOnline()
+            self._was_database_online = is_database_online
+            self._logger.info("Database online.")
+        elif not is_database_online and self._was_database_online:
+            self._onDatabaseOffline()
+            self._was_database_online = is_database_online
+            self._logger.info("Database offline.")
+        await asyncio.sleep(5)
+        asyncio.create_task(self._checkForDatabaseStatusAndRunAppropriateCallback())
+        
+    def _doNothingCallback(self):
+        pass

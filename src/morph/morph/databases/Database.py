@@ -1,7 +1,7 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 
-class Database:
+class Database(ABC):
 
     class Slice(ABC):
         def __init__(self, database, logger):
@@ -57,4 +57,8 @@ class Database:
 
     def update(self, filter, updated_item):
         return self._main_slice.update(filter, updated_item)
+        
+    @abstractmethod
+    def isOnline(self):
+        pass
   

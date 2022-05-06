@@ -44,6 +44,8 @@ class MainComponent:
             if event['type'] == EventConstants.TYPES['database_status']:
                 if event['parameters']['status'] == "online":
                     self._sendDatabaseRequest(event['origin'])
+                elif event['parameters']['status'] == "offline":
+                    self._onSetDatabase(None)
         else:
             self._logger.warning(f"Unknown event type received. type: {type(event)}")
             was_event_processed = False

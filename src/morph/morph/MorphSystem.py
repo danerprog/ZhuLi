@@ -22,7 +22,6 @@ class MorphSystem(MainComponent):
         self._loadDiscordInterface()
         self._fireComponentsLoadedEvent()
         self._loadDatabase()
-        self._fireDatabaseLoadedEvent()
         
     async def processMessage(self, message):
         was_message_processed = await super().processMessage(message)
@@ -55,8 +54,14 @@ class MorphSystem(MainComponent):
             self._logger,
             **database_configuration
         )
+        self._database_manager.setCallbackOnDatabaseOnline(
+            self._onDatabaseOnline
+        )
+        self._database_manager.setCallbackOnDatabaseOffline(
+            self._onDatabaseOffline
+        )
         
-    def _fireDatabaseLoadedEvent(self):
+    def _onDatabaseOnline(self):
         event = Event()
         event['type'] = EventConstants.TYPES['database_status']
         event['parameters'] = {
@@ -64,6 +69,14 @@ class MorphSystem(MainComponent):
         }
         self._environment.fireEvent(event)
         
+    def _onDatabaseOffline(self):
+        event = Event()
+        event['type'] = EventConstants.TYPES['database_status']
+        event['parameters'] = {
+            'status' : "offline"
+        }
+        self._environment.fireEvent(event)
+
     def _sendDatabase(self, target):
         message = Message()
         message['target'] = target

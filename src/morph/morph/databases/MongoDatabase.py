@@ -1,6 +1,6 @@
 from .Database import Database
 
-from pymongo import MongoClient, CursorType
+import pymongo
 
 
 class MongoDatabase(Database):
@@ -78,8 +78,17 @@ class MongoDatabase(Database):
             return operation
 
     def __init__(self, **params):
-        self._database = MongoClient('localhost', params["port"])
+        self._database = pymongo.MongoClient('localhost', params["port"], serverSelectionTimeoutMS = 1000)
         super().__init__(
             MongoDatabase.Slice(self._database[params["name"]], params["logger"].getChild("Slice")), 
             **params)
         self._logger.debug("initialized")
+        
+    def isOnline(self):
+        is_online = True
+        try:
+            self._database.admin.command('ping')
+        except pymongo.errors.ServerSelectionTimeoutError:
+            is_online = False
+        return is_online
+            
