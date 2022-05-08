@@ -33,7 +33,7 @@ class MessageProcessor:
         self._permissions_manager = permissions_manager
         self._logger = logger.getChild(self.__class__.__name__)
         self._environment = environment
-        self._discord_configuration = self._environment.configuration()["main"]["Discord"]
+        self._discord_configuration = self._environment.getStartupConfiguration()
         self._command_character = self._discord_configuration["commandcharacter"]
         self._logger.debug("initialized. command_character: " + self._command_character)
         

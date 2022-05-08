@@ -36,7 +36,7 @@ class MongoDatabase(Database):
             
         def query(self, filter = None):
             query_result = []
-            cursor = self._database.find(filter = filter, cursor_type = CursorType.EXHAUST)
+            cursor = self._database.find(filter = filter, cursor_type = pymongo.CursorType.EXHAUST)
             for document in cursor:
                 query_result.append(document)
             return query_result

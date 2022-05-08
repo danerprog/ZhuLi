@@ -20,7 +20,7 @@ class ListPermissionsTask(MessageTask):
         self._guild = self._context['preprocessed_message'].raw().guild
         self._permissions_manager = self._context['permissions_manager']
         self._task = None
-        self._initializeListOfPossibleEvents()
+        self._list_of_possible_events = self._environment.getRuntimeConfiguration()['command_set']
 
     async def _listPermissions(self):
         self._logger.debug("_listPermissions called.")
@@ -95,6 +95,5 @@ class ListPermissionsTask(MessageTask):
             self._logger.debug(f"stringifying role: {role}")
             role_names.append(self._guild.get_role(role['id']).name)
         return "\n".join(role_names)
+
         
-    def _initializeListOfPossibleEvents(self):
-        self._list_of_possible_events = ['start', 'stop', 'restart', 'status', 'add', 'remove', 'list']

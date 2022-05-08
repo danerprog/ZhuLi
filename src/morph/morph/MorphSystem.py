@@ -47,9 +47,12 @@ class MorphSystem(MainComponent):
         self._environment.fireEvent(event)
         
     def _loadDatabase(self):
-        main_configuration = self._environment.configuration()["main"]
-        database_configuration = main_configuration["Database"]
-        database_configuration["name"] = main_configuration["App"]["name"]
+        configuration = self._environment.getStartupConfiguration()
+        database_configuration = {
+            'program' : configuration['database'],
+            'port' : configuration['port'],
+            'name' : self._environment.getAppName()
+        }
         self._database_manager = DatabaseManager(
             self._logger,
             **database_configuration

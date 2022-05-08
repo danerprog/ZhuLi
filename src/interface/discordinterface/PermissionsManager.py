@@ -6,7 +6,7 @@ class PermissionsManager:
         self._logger = logger.getChild(self.__class__.__name__)
         self._environment = environment
         self._database = database
-        self._list_of_possible_events = ['start', 'stop', 'restart', 'status', 'add', 'remove', 'list']
+        self._list_of_possible_events = self._environment.getRuntimeConfiguration()['command_set']
         self._logger.info("initialized")
         
     def addEventPermissionsForRole(self, event, role_id, guild_id):

@@ -2,6 +2,7 @@ from .MessageProcessor import MessageProcessor
 from .PermissionsManager import PermissionsManager
 from morph import EventConstants
 from morph.MainComponent import MainComponent
+from morph.Message import Message
 
 import asyncio
 import discord
@@ -18,7 +19,8 @@ class DiscordInterface(discord.Client, MainComponent):
             'are_owner_permissions_set' : False,
             'is_interface_fully_initialized' : False
         }
-        asyncio.create_task(self.start(self._environment.configuration()["main"]["Discord"]["token"]))
+        self._updateCommandSet(['add', 'remove', 'list'])
+        asyncio.create_task(self.start(self._environment.getStartupConfiguration()["token"]))
         self._logger.debug("instantiated")
         
     async def on_ready(self):
@@ -37,11 +39,8 @@ class DiscordInterface(discord.Client, MainComponent):
         was_message_processed = await super().processMessage(received_message)
         if was_message_processed:
             parameters = received_message['parameters']
-            if self._isComponentReadyToReceiveMessages():
-                self._processCommand(parameters)
-            else:
-                self._logger.warning(f"not yet ready to receive messages! dropping morph message. ready_flags: {self._ready_flags}")
-      
+            self._processCommand(parameters)
+
     async def sendMessageToUser(self, *args, **kwargs):
         self._logger.info("sending message. args: {}, kwargs: {}".format(
             str(args),
@@ -54,6 +53,8 @@ class DiscordInterface(discord.Client, MainComponent):
     def _processCommand(self, parameters):
         if parameters['command'] == 'send':
             asyncio.create_task(self.sendMessageToUser(**parameters['kwargs']))
+        elif parameters['command'] == 'command_set_response':
+            self._updateCommandSet(parameters['command_set'])
         else:
             self._logger.info(f"Unrecognized command '{parameters['command']}'!")
             
@@ -61,7 +62,7 @@ class DiscordInterface(discord.Client, MainComponent):
         return False not in self._ready_flags.values()
 
     def _prepareOwnerPermissionsIfNeeded(self):
-        id = int(self._environment.getConfiguration("main")["Discord"]["ownerid"])
+        id = int(self._environment.getStartupConfiguration()["ownerid"])
         if not self._ready_flags['are_owner_permissions_set'] and not self._permissions_manager.isUserAnOwner(id):
             self._permissions_manager.removeOwners()
             self._permissions_manager.addUserAsOwner(id)
@@ -104,13 +105,6 @@ class DiscordInterface(discord.Client, MainComponent):
             str(value)
         ))
         return value
-    
-    def _onSetDatabase(self, new_database):
-        super()._onSetDatabase(new_database)
-        self._ready_flags['is_database_ready'] = new_database is not None
-        if self._ready_flags['is_database_ready']:
-            self._finishInitializationIfNotYetDone()
-            self._prepareOwnerPermissionsIfNeeded()
             
     def _sendNotReadyToReceiveMessageToUser(self, channel_id):
         message = {
@@ -140,6 +134,32 @@ class DiscordInterface(discord.Client, MainComponent):
             ready_check_names['value'] = f"{ready_check_names['value']}\n{name}"
             ready_check_values['value'] = f"{ready_check_values['value']}\n{value}"
         return [ready_check_names, ready_check_values]
+        
+    def _onSetDatabase(self, new_database):
+        super()._onSetDatabase(new_database)
+        self._ready_flags['is_database_ready'] = new_database is not None
+        if self._ready_flags['is_database_ready']:
+            self._finishInitializationIfNotYetDone()
+            self._prepareOwnerPermissionsIfNeeded()
+            
+    def _onComponentsLoaded(self, loaded_components):
+        super()._onComponentsLoaded(loaded_components)
+        for backend_component_name in loaded_components['backend']:
+            self._sendCommandListRequestMessage(backend_component_name)
+            
+    def _sendCommandListRequestMessage(self, backend_component_name):
+        message = Message()
+        message['target'] = {
+            'component_level' : "backend",
+            'component_name' : backend_component_name
+        }
+        message['parameters'] = {
+            'command' : "command_set_request"
+        }
+        self._environment.sendMessage(message)
+        
+    def _updateCommandSet(self, iterable_of_commands):
+        self._environment.getRuntimeConfiguration()['command_set'].update(iterable_of_commands)
             
         
     

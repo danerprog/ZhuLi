@@ -11,6 +11,7 @@ class MainComponent:
     NEXT_COMPONENT_ID = 1
 
     def __init__(self):
+        self._loaded_components = {}
         self._initializeId()
         self._initializeComponentMetadata()
         self._initializeEnvironment()
@@ -46,6 +47,9 @@ class MainComponent:
                     self._sendDatabaseRequest(event['origin'])
                 elif event['parameters']['status'] == "offline":
                     self._onSetDatabase(None)
+            elif event['type'] == EventConstants.TYPES['components_loaded']:
+                self._onComponentsLoaded(event['parameters']['loaded_components'])
+
         else:
             self._logger.warning(f"Unknown event type received. type: {type(event)}")
             was_event_processed = False
@@ -98,3 +102,7 @@ class MainComponent:
         
     def _onSetDatabase(self, new_database):
         self._environment.setDatabase(new_database)
+        
+    def _onComponentsLoaded(self, loaded_components):
+        pass
+         

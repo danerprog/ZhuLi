@@ -9,11 +9,13 @@ import os
 class BatchFileManager(MainComponent):
     def __init__(self):
         super().__init__()
+        self._environment.getRuntimeConfiguration()['command_set'].update(['start', 'stop', 'restart', 'status'])
         self._initializeBots()
         
     async def processMessage(self, received_message):
-        self._logger.info(f"Received message. received_message: {received_message}")
-        parameters = received_message['parameters']
+        was_message_processed = await super().processMessage(received_message)
+        if was_message_processed:
+            self._continueProcessingMessage(received_message)
         
     async def processEvent(self, event):
         self._logger.info(f"Received event. event: {event}")
@@ -89,7 +91,7 @@ class BatchFileManager(MainComponent):
     def _sendOwnStatusMessage(self, in_kwargs):
         message = {}
         message["title"] = "status"
-        message["description"] = self._environment.getConfiguration("main")["App"]["name"]
+        message["description"] = self._environment.getAppName()
         message["fields"] = []
         message_field_value = ""
         for bot in self._bots:
@@ -145,7 +147,7 @@ class BatchFileManager(MainComponent):
     def _initializeBots(self):
         self._logger.info("initializing bots...")
         self._bots = []
-        batch_file_directory = self._environment.configuration()["main"]["App"]["batchfiledirectory"]
+        batch_file_directory = self._environment.getStartupConfiguration()["directory"]
         for filename in os.listdir(batch_file_directory):
             if filename.endswith(".bat"):
                 self._initializeBot(batch_file_directory, filename)
@@ -174,4 +176,19 @@ class BatchFileManager(MainComponent):
             self.status(**parameters['kwargs'])
         else:
             self._logger.warning(f"Unrecognized command '{command}'! parameters: {parameters}")
-        
+            
+    def _continueProcessingMessage(self, message):
+        command = message['parameters']['command']
+        if command == "command_set_request":
+            self._sendCommandListResponse(message['sender'])
+        else:
+            self._logger.info(f"Unrecognized command: {command}")
+            
+    def _sendCommandListResponse(self, target):
+        message = Message()
+        message['target'] = target
+        message['parameters'] = {
+            'command' : "command_set_response",
+            'command_set' : self._environment.getRuntimeConfiguration()['command_set']
+        }
+        self._environment.sendMessage(message)

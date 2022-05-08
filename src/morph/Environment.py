@@ -17,11 +17,12 @@ class Environment:
             self._logger = self._parent.getLogger(f"{self.__class__.__name__}[{self._component_name}]")
             self._component_manager = self._parent.getComponentManager()
             self.setDatabase(None)
+            self._runtime_configuration = {
+                'command_set' : set()
+            }
+            self._app_name = self._parent.configuration()["main"]["App"]["name"]
             self._logger.info("Environment shard created.")
-            
-        def configuration(self):
-            return self._parent.configuration()
-            
+
         def database(self):
             return self._database
             
@@ -33,12 +34,18 @@ class Environment:
             
         def setDatabase(self, database):
             self._database = database
+            
+        def getAppName(self):
+            return self._app_name
 
         def getLogger(self, logger_name = None):
             return self._parent.getLogger(logger_name)
             
-        def getConfiguration(self, configuration_file_name):
-            return self._parent.getConfiguration(configuration_file_name)
+        def getRuntimeConfiguration(self):
+            return self._runtime_configuration
+            
+        def getStartupConfiguration(self):
+            return self._parent.getConfiguration("main")[self._component_name]
             
         def getComponentInfo(self):
             return {
