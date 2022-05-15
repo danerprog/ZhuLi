@@ -19,6 +19,7 @@ class MorphSystem(MainComponent):
         
     async def _loadComponents(self):
         self._loadBatchFileManager()
+        self._loadUrlArchiver()
         self._loadDiscordInterface()
         self._fireComponentsLoadedEvent()
         self._loadDatabase()
@@ -33,6 +34,10 @@ class MorphSystem(MainComponent):
     def _loadBatchFileManager(self):
         import backend.batchfilemanager
         self._loaded_components['backend'].append('batchfilemanager')
+        
+    def _loadUrlArchiver(self):
+        import backend.urlarchiver
+        self._loaded_components['backend'].append('urlarchiver')
 
     def _loadDiscordInterface(self):
         import interface.discordinterface
