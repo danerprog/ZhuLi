@@ -1,12 +1,19 @@
+from . import MessageTemplates
 from .Bot import Bot
+from .tasks.RestartTask import RestartTask
+from .tasks.StartTask import StartTask
+from .tasks.StopTask import StopTask
+from .tasks.StatusTask import StatusTask
 from morph import EventConstants
 from morph.MainComponent import MainComponent
 from morph.Message import Message
 
+import asyncio
 import os
 
 
 class BatchFileManager(MainComponent):
+
     def __init__(self):
         super().__init__()
         self._environment.getRuntimeConfiguration()['command_set'].update(['start', 'stop', 'restart', 'status'])
@@ -20,127 +27,63 @@ class BatchFileManager(MainComponent):
     async def processEvent(self, event):
         self._logger.info(f"Received event. event: {event}")
         if event['type'] == EventConstants.TYPES['user_input']:
-            self._processUserInput(event['parameters'])
+            self._process(event['parameters'])
+
+    def _process(self, parameters):
+        task = self._getTask(parameters)
+        if task is not None:
+            asyncio.create_task(self._runTask(task, **parameters['kwargs']))
         
-    def start(self, *args, **kwargs):
-        self._logger.info("start called. kwargs: " + str(kwargs))
-        bot_name = kwargs["bot_name"]
-        message = {"title" : "start"}
-        
-        for bot in self._bots:
-            if bot_name == bot.getName():
-                result = bot.start()
-                if result:
-                    message["description"] = bot_name + " was successfully started."
-                    message["level"] = "info"
-                else:
-                    message["description"] = bot_name + " is already running!"
-                    message["level"] = "warning"
-                    
-        self._sendMessage(message, **kwargs)
-    
-    def stop(self, *args, **kwargs):
-        self._logger.info("stop called. kwargs: " + str(kwargs))
-        bot_name = kwargs["bot_name"]
-        message = {"title" : "stop"}
-        
-        for bot in self._bots:
-            if bot_name == bot.getName():
-                result = bot.stop()
-                
-                if result:
-                    message["description"] = bot_name + " was successfully stopped."
-                    message["level"] = "info"
-                else:
-                    message["description"] = bot_name + " is not running!"
-                    message["level"] = "warning"
-                    
-        self._sendMessage(message, **kwargs)
-    
-    def restart(self, *args, **kwargs):
-        self._logger.info("restart called. kwargs: " + str(kwargs))
-        bot_name = kwargs["bot_name"]
-        message = {"title" : "restart"}
-        
-        for bot in self._bots:
-            if bot_name == bot.getName():
-                result = bot.restart()
-                
-                if result:
-                    message["description"] = bot_name + " was successfully restarted."
-                    message["level"] = "info"
-                else:
-                    message["description"] = "Unable to restart {}!".format(bot_name)
-                    message["level"] = "warning"
-                    
-        self._sendMessage(message, **kwargs)
-    
-    def status(self, *args, **in_kwargs):
-        self._logger.info("status called. kwargs: " + str(in_kwargs))
-        bot_name = in_kwargs["bot_name"]
-        self._sendStatusMessages(bot_name, in_kwargs)
-        
-    def _sendStatusMessages(self, bot_name, in_kwargs):
-        if bot_name is None:
-            self._sendOwnStatusMessage(in_kwargs)
+    def _getTask(self, parameters):
+        task_to_return = None
+        command = parameters['command']
+        context = {
+            'environment' : self._environment,
+            'parent_logger' : self._logger,
+            'arguments_string' : parameters['kwargs']['arguments_string'],
+            'bot_list' : self._bots
+        }
+        if command == 'start':
+            task_to_return = StartTask(**context)
+        elif command == 'stop':
+            task_to_return = StopTask(**context)
+        elif command == 'restart':
+            task_to_return = RestartTask(**context)
+        elif command == 'status':
+            task_to_return = StatusTask(**context)
         else:
-            for bot in self._bots:
-                if bot.getName() == bot_name:
-                    self._sendBotStatusMessage(bot, in_kwargs)
-                    
-    def _sendOwnStatusMessage(self, in_kwargs):
-        message = {}
-        message["title"] = "status"
-        message["description"] = self._environment.getAppName()
-        message["fields"] = []
-        message_field_value = ""
-        for bot in self._bots:
-            message_field_value += "{}: {}\n".format(
-                bot.getName(),
-                "Running" if bot.isRunning() else "Down"
-            )
-        message["fields"].append({
-            "name" : "Status",
-            "value" : message_field_value,
-            "inline" : False
-        })
-        message["level"] = "info"
-        self._sendMessage(message, **in_kwargs)
+            self._logger.warning(f"Unrecognized command '{command}'! parameters: {parameters}")
+        return task_to_return
         
-    def _sendBotStatusMessage(self, bot, in_kwargs):
-        isBotRunning = bot.isRunning()
-        message = {}
-        message["title"] = "status"
-        message["description"] = bot.getName()
-        message["fields"] = []
-        message["fields"].append({
-            "name" : "Status",
-            "value" : "Running" if isBotRunning else "Down",
-            "inline" : False
-        })
-        if isBotRunning:
-            message["fields"].append({
-                "name" : "Started",
-                "value" : bot.getTimestampStarted(),
-                "inline" : False
-            })
-            message["fields"].append({
-                "name" : "Uptime",
-                "value" : bot.getTimestampUptime(),
-                "inline" : False
-            })
-        message["level"] = "info"
-        self._sendMessage(message, **in_kwargs)
-        
-    def _sendMessage(self, message_to_user, **out_kwargs):
-        out_kwargs["message"] = message_to_user
+    async def _runTask(self, task, **kwargs):
+        self._logger.info("running task...")
+        await task.run()
+        self._logger.info("task complete. sending reply if needed.")
+        reply = task.reply()
+        if reply is not None:
+            if isinstance(reply, dict):
+                self._sendMessage(reply, **kwargs)
+            elif isinstance(reply, list):
+                for reply_message in reply:
+                    self._sendMessage(reply_message, **kwargs)
+            else:
+                self._logger.warning(f"unrecognized reply type: {type(reply)}. no reply will be sent")
+       
+    def _sendStatusMessages(self, bot, kwargs):
+        if bot is None:
+            self._sendOwnStatusMessage(kwargs)
+        else:
+            self._sendBotStatusMessage(bot, kwargs)
+         
+    def _sendMessage(self, message_to_user, **kwargs):
+        kwargs["message"] = message_to_user
         message = Message()
         message['target'] = {
             'component_level' : 'interface'
         }
         message['parameters'] = {
             'command' : 'send',
-            'kwargs' : out_kwargs
+            'kwargs' : kwargs
         }
         self._environment.sendMessage(message)
 
@@ -164,19 +107,6 @@ class BatchFileManager(MainComponent):
             self._environment.getLogger("Bot").getChild(batch_filename)
         ))
 
-    def _processUserInput(self, parameters):
-        command = None if 'command' not in parameters else parameters['command']
-        if command == 'start':
-            self.start(**parameters['kwargs'])
-        elif command == 'stop':
-            self.stop(**parameters['kwargs'])
-        elif command == 'restart':
-            self.restart(**parameters['kwargs'])
-        elif command == 'status':
-            self.status(**parameters['kwargs'])
-        else:
-            self._logger.warning(f"Unrecognized command '{command}'! parameters: {parameters}")
-            
     def _continueProcessingMessage(self, message):
         command = message['parameters']['command']
         if command == "command_set_request":
@@ -192,3 +122,4 @@ class BatchFileManager(MainComponent):
             'command_set' : self._environment.getRuntimeConfiguration()['command_set']
         }
         self._environment.sendMessage(message)
+   

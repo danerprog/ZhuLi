@@ -27,8 +27,9 @@ class Task(ABC):
     
     def __init__(self, **context):
         self._context = context
-        self._environment = self._context['environment']
         self._logger = self._context['parent_logger'].getChild(self.__class__.__name__)
+        self._logger.debug(f"initializing. context: {self._context}")
+        self._environment = self._context['environment']
         self._initializeArguments()
         self._initializeResultVariables()
 
@@ -46,11 +47,11 @@ class Task(ABC):
         self._result = None
         self._reply = None
         
-    def _initializeArguments(self, **context):
-        if 'arguments' in context:
-            self._arguments = context['arguments']
-        elif 'argument_string' in context:
-            self._arguments = Task.Arguments(context['argument_string'])
+    def _initializeArguments(self):
+        if 'arguments' in self._context:
+            self._arguments = self._context['arguments']
+        elif 'arguments_string' in self._context:
+            self._arguments = Task.Arguments(self._context['arguments_string'])
         else:
             self._arguments = Task.Arguments("")
-            self._logger.warning("Important keys not initialized!")
+            self._logger.warning(f"Important keys not initialized: {missing_keys}")
