@@ -52,7 +52,7 @@ class DiscordInterface(discord.Client, MainComponent):
         
     def _processCommand(self, parameters):
         if parameters['command'] == 'send':
-            asyncio.create_task(self.sendMessageToUser(**parameters['kwargs']))
+            asyncio.create_task(self.sendMessageToUser(**parameters))
         elif parameters['command'] == 'command_set_response':
             self._updateCommandSet(parameters['command_set'])
         else:

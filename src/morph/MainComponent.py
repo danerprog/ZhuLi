@@ -1,4 +1,3 @@
-from .ComponentMessage import ComponentMessage
 from .Environment import Environment
 from .Event import Event
 from .Message import Message
@@ -44,7 +43,7 @@ class MainComponent:
         if isinstance(event, Event):
             if event['type'] == EventConstants.TYPES['database_status']:
                 if event['parameters']['status'] == "online":
-                    self._sendDatabaseRequest(event['origin'])
+                    self._sendDatabaseRequest(event['sender'])
                 elif event['parameters']['status'] == "offline":
                     self._onSetDatabase(None)
             elif event['type'] == EventConstants.TYPES['components_loaded']:
@@ -92,9 +91,9 @@ class MainComponent:
         self._logger.debug(f"_isDescribedByDictionary called. results: {results}")
         return len(results) > 0 and False not in results
         
-    def _sendDatabaseRequest(self, origin):
+    def _sendDatabaseRequest(self, sender):
         message = Message()
-        message['target'] = origin
+        message['target'] = sender
         message['parameters'] = {
             'command' : 'request_database',
         }

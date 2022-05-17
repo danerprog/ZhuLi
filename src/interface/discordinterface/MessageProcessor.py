@@ -73,10 +73,8 @@ class MessageProcessor:
             message_to_self['target'] = self._environment.getComponentInfo()
             message_to_self['parameters'] = {
                 'command' : 'send',
-                'kwargs' : {
-                    "channel_id" : channel_id,
-                    "message" : message_to_user
-                }
+                'channel_id' : channel_id,
+                'message' : message_to_user
             }
             self._environment.sendMessage(message_to_self)
         

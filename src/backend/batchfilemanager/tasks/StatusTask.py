@@ -1,4 +1,5 @@
 from backend.batchfilemanager import MessageTemplates
+from morph.Message import Message
 import morph.Task
 
 
@@ -19,6 +20,7 @@ class StatusTask(morph.Task.Task):
             self._reply['level'] = "warning"
         else:
             self._setOwnStatusAsReply()
+        self._sendMessage(self._reply)
         
     def _setOwnStatusAsReply(self):
         self._reply['description'] = self._environment.getAppName()
@@ -66,4 +68,13 @@ class StatusTask(morph.Task.Task):
                 self._bot = bot
                 break
         
+    def _sendMessage(self, message_to_user):
+        message_to_component = Message()
+        message_to_component['target'] = self._message['sender']
+        message_to_component['parameters'] = {
+            'command' : "send",
+            'message' : message_to_user,
+            'channel_id' : self._message['parameters']['channel_id']
+        }
+        self._environment.sendMessage(message_to_component)
 

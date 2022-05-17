@@ -1,4 +1,5 @@
 from backend.batchfilemanager import MessageTemplates
+from morph.Message import Message
 import morph.Task
 
 
@@ -25,7 +26,7 @@ class StartTask(morph.Task.Task):
         else:
             message['description'] = MessageTemplates.MESSAGE['no_name_provided']
             message['level'] = "warning"
-        self._reply = message
+        self._sendMessage(message)
             
     def _findBot(self):
         self._bot = None
@@ -33,5 +34,13 @@ class StartTask(morph.Task.Task):
             if self._bot_name == bot.getName():
                 self._bot = bot
                 break
-        
 
+    def _sendMessage(self, message_to_user):
+        message_to_component = Message()
+        message_to_component['target'] = self._message['sender']
+        message_to_component['parameters'] = {
+            'command' : "send",
+            'message' : message_to_user,
+            'channel_id' : self._message['parameters']['channel_id']
+        }
+        self._environment.sendMessage(message_to_component)

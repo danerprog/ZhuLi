@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class Task(ABC):
     class Arguments:
         def __init__(self, argument_string):
@@ -30,22 +31,19 @@ class Task(ABC):
         self._logger = self._context['parent_logger'].getChild(self.__class__.__name__)
         self._logger.debug(f"initializing. context: {self._context}")
         self._environment = self._context['environment']
+        self._message = self._context['message']
         self._initializeArguments()
         self._initializeResultVariables()
 
     @abstractmethod
     async def run(self):
         pass
-    
-    def reply(self):
-        return self._reply
         
     def result(self):
         return self._result
 
     def _initializeResultVariables(self):
         self._result = None
-        self._reply = None
         
     def _initializeArguments(self):
         if 'arguments' in self._context:
@@ -54,4 +52,6 @@ class Task(ABC):
             self._arguments = Task.Arguments(self._context['arguments_string'])
         else:
             self._arguments = Task.Arguments("")
-            self._logger.warning(f"Important keys not initialized: {missing_keys}")
+        self._logger.debug(f"arguments initialized. arguments: {self._arguments}")
+
+

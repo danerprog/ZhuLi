@@ -9,7 +9,7 @@ class Event:
         self._event = {
             'id' : Event.CURRENT_ID_TO_USE,
             'type' : EventConstants.TYPES['invalid'],
-            'origin' : {},
+            'sender' : {},
             'parameters' : {}
         }
         Event.CURRENT_ID_TO_USE += 1

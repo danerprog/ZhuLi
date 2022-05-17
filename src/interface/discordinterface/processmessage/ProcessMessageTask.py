@@ -30,7 +30,7 @@ class ProcessMessageTask(MessageTask):
             task.passResultsTo(self)
         else:
             self._reply = None
-            self._fireEvent(event)
+            self._fireUserInputEvent(event)
             
     def _getTask(self, event):
         task_to_return = None
@@ -42,16 +42,14 @@ class ProcessMessageTask(MessageTask):
             task_to_return = ListEventTask(**self._context)
         return task_to_return
 
-    def _fireEvent(self, event):
+    def _fireUserInputEvent(self, event):
         self._logger.info(f"firing '{event}'.")
         event_to_fire = Event()
         event_to_fire['type'] = EventConstants.TYPES['user_input']
         event_to_fire['parameters'] = {
             'command' : event,
-            'kwargs' : {
-                'arguments_string' : self._context['preprocessed_message'].raw().content,
-                'channel_id' : self._context['preprocessed_message'].raw().channel.id
-            }
+            'arguments_string' : self._context['preprocessed_message'].raw().content,
+            'channel_id' : self._context['preprocessed_message'].raw().channel.id
         }
         self._context['environment'].fireEvent(event_to_fire)
 

@@ -59,7 +59,7 @@ class Environment:
             self._component_manager.sendMessage(message)
 
         def fireEvent(self, event):
-            event['origin'] = self.getComponentInfo()
+            event['sender'] = self.getComponentInfo()
             self._parent.fireEvent(event)
 
         def initialize(component_id, component_name, component_level):
