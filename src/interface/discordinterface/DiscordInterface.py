@@ -1,6 +1,5 @@
 from .MessageProcessor import MessageProcessor
 from .PermissionsManager import PermissionsManager
-from morph import EventConstants
 from morph.MainComponent import MainComponent
 from morph.messages.CommandMessage import CommandMessage
 

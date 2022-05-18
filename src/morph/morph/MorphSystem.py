@@ -1,5 +1,4 @@
 from .DatabaseManager import DatabaseManager
-from morph import EventConstants
 from morph.MainComponent import MainComponent
 from morph.messages.CommandMessage import CommandMessage
 from morph.messages.EventMessage import ComponentsLoadedEvent, DatabaseStatusEvent

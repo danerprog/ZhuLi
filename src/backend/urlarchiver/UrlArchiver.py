@@ -1,4 +1,3 @@
-from morph import EventConstants
 from morph.MainComponent import MainComponent
 
 
@@ -13,8 +12,7 @@ class UrlArchiver(MainComponent):
             self._continueProcessingEvent(received_message)
             
     def _continueProcessingEvent(self, event):
-        if event['type'] == EventConstants.TYPES['user_input']:
-            self._processUserInput(event['parameters'])
+        pass
         
     def _processUserInput(self, parameters):
         command = None if 'command' not in parameters else parameters['command']

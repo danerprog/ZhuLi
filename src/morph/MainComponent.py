@@ -1,6 +1,4 @@
-from . import EventConstants
 from .Environment import Environment
-from .Event import Event
 from .messages.CommandMessage import CommandMessage
 from .messages.EventMessage import ComponentsLoadedEvent, DatabaseStatusEvent
 from .processors.MessageProcessor import MessageProcessor

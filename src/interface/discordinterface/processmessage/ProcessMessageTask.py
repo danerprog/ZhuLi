@@ -3,7 +3,6 @@ from .ListEventTask import ListEventTask
 from .MessageTask import MessageTask
 from .RemoveEventTask import RemoveEventTask
 from .ShouldMessageBeProcessedTask import ShouldMessageBeProcessedTask
-from morph import EventConstants
 from morph.messages.CommandMessage import CommandMessage
 
 
