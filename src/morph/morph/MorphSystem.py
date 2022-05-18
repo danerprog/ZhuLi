@@ -1,9 +1,8 @@
 from .DatabaseManager import DatabaseManager
 from morph import EventConstants
-from morph.Event import Event
 from morph.MainComponent import MainComponent
 from morph.messages.CommandMessage import CommandMessage
-from morph.messages.EventMessage import DatabaseStatusEvent
+from morph.messages.EventMessage import ComponentsLoadedEvent, DatabaseStatusEvent
 
 import asyncio
 
@@ -45,11 +44,8 @@ class MorphSystem(MainComponent):
         self._loaded_components['interface'].append('discordinterface')
     
     def _fireComponentsLoadedEvent(self):
-        event = Event()
-        event['type'] = EventConstants.TYPES['components_loaded']
-        event['parameters'] = {
-            'loaded_components' : self._loaded_components
-        }
+        event = ComponentsLoadedEvent()
+        event.addComponents(self._loaded_components)
         self._environment.fireEvent(event)
         
     def _loadDatabase(self):
