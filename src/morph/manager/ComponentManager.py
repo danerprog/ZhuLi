@@ -1,3 +1,5 @@
+from morph.messages.EventMessage import EventMessage
+
 import asyncio
 import traceback
 
@@ -26,7 +28,10 @@ class ComponentManager:
     def fireEvent(self, event):
         self._logger.info(f"Event fired: event: {event}")
         for component in self._components:
-            task = asyncio.create_task(component.processEvent(event))
+            if isinstance(event, EventMessage):
+                task = asyncio.create_task(component.processMessage(event))
+            else:
+                task = asyncio.create_task(component.processEvent(event))
             task.add_done_callback(self._printExceptionIfPossible)
             
     def _printExceptionIfPossible(self, task):

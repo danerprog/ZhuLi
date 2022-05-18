@@ -5,7 +5,7 @@ from .tasks.StartTask import StartTask
 from .tasks.StopTask import StopTask
 from .tasks.StatusTask import StatusTask
 from morph.MainComponent import MainComponent
-from morph.tasks.CommandMessageToTaskProcessor import CommandMessageToTaskProcessor
+from morph.processors.CommandMessageToTaskProcessor import CommandMessageToTaskProcessor
 
 import asyncio
 import os

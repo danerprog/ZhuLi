@@ -2,6 +2,7 @@ from . import EventConstants
 from .Environment import Environment
 from .Event import Event
 from .messages.CommandMessage import CommandMessage
+from .messages.EventMessage import DatabaseStatusEvent
 from .processors.MessageProcessor import MessageProcessor
 
 
@@ -30,23 +31,20 @@ class MainComponent(MessageProcessor):
         self._logger.info(f"Message received. message: {message}")
         message_to_process = await super().processMessage(message)
         if message_to_process is not None:
-            parameters = message['parameters']
-            if parameters['command'] == 'set_database':
-                self._onSetDatabase(parameters['database'])
+            if isinstance(message, CommandMessage) and message.getCommand() == 'set_database':
+                self._onSetDatabase(message.getParameter('database'))
+            elif isinstance(message, DatabaseStatusEvent) and message.getStatus() == "online":
+                self._sendDatabaseRequest(message['sender'])
+            elif isinstance(message, DatabaseStatusEvent) and message.getStatus() == "offline":
+                self._onSetDatabase(None)
         return message_to_process
 
     async def processEvent(self, event):
         self._logger.info(f"Event received. event: {event}")
         was_event_processed = True
         if isinstance(event, Event):
-            if event['type'] == EventConstants.TYPES['database_status']:
-                if event['parameters']['status'] == "online":
-                    self._sendDatabaseRequest(event['sender'])
-                elif event['parameters']['status'] == "offline":
-                    self._onSetDatabase(None)
-            elif event['type'] == EventConstants.TYPES['components_loaded']:
+            if event['type'] == EventConstants.TYPES['components_loaded']:
                 self._onComponentsLoaded(event['parameters']['loaded_components'])
-
         else:
             self._logger.warning(f"Unknown event type received. type: {type(event)}")
             was_event_processed = False

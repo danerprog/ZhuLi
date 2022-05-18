@@ -3,6 +3,7 @@ from morph import EventConstants
 from morph.Event import Event
 from morph.MainComponent import MainComponent
 from morph.messages.CommandMessage import CommandMessage
+from morph.messages.EventMessage import DatabaseStatusEvent
 
 import asyncio
 
@@ -70,19 +71,13 @@ class MorphSystem(MainComponent):
         )
         
     def _onDatabaseOnline(self):
-        event = Event()
-        event['type'] = EventConstants.TYPES['database_status']
-        event['parameters'] = {
-            'status' : "online"
-        }
+        event = DatabaseStatusEvent()
+        event.setStatusToOnline()
         self._environment.fireEvent(event)
         
     def _onDatabaseOffline(self):
-        event = Event()
-        event['type'] = EventConstants.TYPES['database_status']
-        event['parameters'] = {
-            'status' : "offline"
-        }
+        event = DatabaseStatusEvent()
+        event.setStatusToOffline()
         self._environment.fireEvent(event)
 
     def _sendDatabase(self, target):
