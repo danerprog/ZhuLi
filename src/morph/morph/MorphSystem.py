@@ -2,7 +2,7 @@ from .DatabaseManager import DatabaseManager
 from morph import EventConstants
 from morph.Event import Event
 from morph.MainComponent import MainComponent
-from morph.Message import Message
+from morph.messages.CommandMessage import CommandMessage
 
 import asyncio
 
@@ -25,11 +25,11 @@ class MorphSystem(MainComponent):
         self._loadDatabase()
         
     async def processMessage(self, message):
-        was_message_processed = await super().processMessage(message)
-        if was_message_processed:
-            parameters = message['parameters']
+        message_to_process = await super().processMessage(message)
+        if message_to_process is not None:
+            parameters = message_to_process['parameters']
             if parameters['command'] == 'request_database':
-                self._sendDatabase(message['sender'])
+                self._sendDatabase(message_to_process['sender'])
 
     def _loadBatchFileManager(self):
         import backend.batchfilemanager
@@ -86,10 +86,8 @@ class MorphSystem(MainComponent):
         self._environment.fireEvent(event)
 
     def _sendDatabase(self, target):
-        message = Message()
+        message = CommandMessage()
         message['target'] = target
-        message['parameters'] = {
-            'command' : 'set_database',
-            'database' : self._database_manager.get()[target['component_name']]
-        }
+        message.setCommand("set_database")
+        message.setParameter('database', self._database_manager.get()[target['component_name']])
         self._environment.sendMessage(message)

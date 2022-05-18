@@ -1,9 +1,9 @@
 from backend.batchfilemanager import MessageTemplates
-from morph.Message import Message
-import morph.Task
+from morph.messages.CommandMessage import CommandMessage
+from morph.tasks.Task import Task
 
 
-class RestartTask(morph.Task.Task):
+class RestartTask(Task):
     def __init__(self, **context):
         super().__init__(**context)
         self._bot_list = context['bot_list']
@@ -36,11 +36,9 @@ class RestartTask(morph.Task.Task):
                 break
         
     def _sendMessage(self, message_to_user):
-        message_to_component = Message()
+        message_to_component = CommandMessage()
         message_to_component['target'] = self._message['sender']
-        message_to_component['parameters'] = {
-            'command' : "send",
-            'message' : message_to_user,
-            'channel_id' : self._message['parameters']['channel_id']
-        }
+        message_to_component.setCommand("send")
+        message_to_component.setParameter('message', message_to_user)
+        message_to_component.setParameter('channel_id', self._message['parameters']['channel_id'])
         self._environment.sendMessage(message_to_component)

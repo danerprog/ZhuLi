@@ -1,9 +1,9 @@
 from backend.batchfilemanager import MessageTemplates
-from morph.Message import Message
-import morph.Task
+from morph.messages.CommandMessage import CommandMessage
+from morph.tasks.Task import Task
 
 
-class CommandSetRequestTask(morph.Task.Task):
+class CommandSetRequestTask(Task):
     def __init__(self, **context):
         super().__init__(**context)
         self._logger.debug(f"instantiated.")
@@ -12,11 +12,8 @@ class CommandSetRequestTask(morph.Task.Task):
         self._setCommandListResponseAsReply()
 
     def _setCommandListResponseAsReply(self):
-        message = Message()
+        message = CommandMessage()
         message['target'] = self._message['sender']
-        message['parameters'] = {
-            'command' : "command_set_response",
-            'command_set' : self._environment.getRuntimeConfiguration()['command_set']
-        }
+        message.setCommand("command_set_response")
+        message.setParameter('command_set', self._environment.getRuntimeConfiguration()['command_set'])
         self._environment.sendMessage(message)
-

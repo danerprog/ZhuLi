@@ -1,5 +1,5 @@
 from .processmessage.ProcessMessageTask import ProcessMessageTask
-from morph.Message import Message
+from morph.messages.CommandMessage import CommandMessage
 
 import asyncio
 
@@ -69,13 +69,11 @@ class MessageProcessor:
 
     def _sendMessageToSelfIfNeeded(self, message_to_user, channel_id):
         if message_to_user is not None:
-            message_to_self = Message()
+            message_to_self = CommandMessage()
             message_to_self['target'] = self._environment.getComponentInfo()
-            message_to_self['parameters'] = {
-                'command' : 'send',
-                'channel_id' : channel_id,
-                'message' : message_to_user
-            }
+            message_to_self.setCommand("send")
+            message_to_self.setParameter('message', message_to_user)
+            message_to_self.setParameter('channel_id', channel_id)
             self._environment.sendMessage(message_to_self)
         
 

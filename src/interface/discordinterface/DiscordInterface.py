@@ -2,7 +2,7 @@ from .MessageProcessor import MessageProcessor
 from .PermissionsManager import PermissionsManager
 from morph import EventConstants
 from morph.MainComponent import MainComponent
-from morph.Message import Message
+from morph.messages.CommandMessage import CommandMessage
 
 import asyncio
 import discord
@@ -148,14 +148,12 @@ class DiscordInterface(discord.Client, MainComponent):
             self._sendCommandListRequestMessage(backend_component_name)
             
     def _sendCommandListRequestMessage(self, backend_component_name):
-        message = Message()
+        message = CommandMessage()
         message['target'] = {
             'component_level' : "backend",
             'component_name' : backend_component_name
         }
-        message['parameters'] = {
-            'command' : "command_set_request"
-        }
+        message.setCommand("command_set_request")
         self._environment.sendMessage(message)
         
     def _updateCommandSet(self, iterable_of_commands):

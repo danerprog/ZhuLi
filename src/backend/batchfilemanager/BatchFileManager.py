@@ -6,8 +6,9 @@ from .tasks.StartTask import StartTask
 from .tasks.StopTask import StopTask
 from .tasks.StatusTask import StatusTask
 from morph import EventConstants
-from morph.ComponentProcessors import UserInputEventToTaskProcessor, MessageWithCommandToTaskProcessor
+from morph.ComponentProcessors import UserInputEventToTaskProcessor
 from morph.MainComponent import MainComponent
+from morph.tasks.CommandMessageToTaskProcessor import CommandMessageToTaskProcessor
 
 import asyncio
 import os
@@ -19,7 +20,7 @@ import os
     'restart' : RestartTask,
     'status' : StatusTask
 })
-@MessageWithCommandToTaskProcessor({
+@CommandMessageToTaskProcessor({
     'command_set_request' : CommandSetRequestTask
 })
 class BatchFileManager(MainComponent):

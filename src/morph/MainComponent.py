@@ -1,11 +1,13 @@
-from .Environment import Environment
-from .Event import Event
-from .Message import Message
 from . import EventConstants
 from . import MessageStatus
+from .Environment import Environment
+from .Event import Event
+from .messages.CommandMessage import CommandMessage
+from .processors.MessageProcessor import MessageProcessor
 
 
-class MainComponent:
+
+class MainComponent(MessageProcessor):
 
     NEXT_COMPONENT_ID = 1
 
@@ -27,15 +29,12 @@ class MainComponent:
  
     async def processMessage(self, message):
         self._logger.info(f"Message received. message: {message}")
-        was_message_processed = True
-        if isinstance(message, Message):
+        message_to_process = await super().processMessage(message)
+        if message_to_process is not None:
             parameters = message['parameters']
             if parameters['command'] == 'set_database':
                 self._onSetDatabase(parameters['database'])
-        else:
-            self._logger.warning(f"Unknown message type received. type: {type(message)}")
-            was_message_processed = False
-        return was_message_processed
+        return message_to_process
 
     async def processEvent(self, event):
         self._logger.info(f"Event received. event: {event}")
@@ -92,11 +91,9 @@ class MainComponent:
         return len(results) > 0 and False not in results
         
     def _sendDatabaseRequest(self, sender):
-        message = Message()
+        message = CommandMessage()
         message['target'] = sender
-        message['parameters'] = {
-            'command' : 'request_database',
-        }
+        message.setCommand("request_database")
         self._environment.sendMessage(message)
         
     def _onSetDatabase(self, new_database):
