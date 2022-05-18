@@ -38,13 +38,13 @@ class CommandMessageToTaskProcessor:
             task_to_return = None
             if originalGetTask is not None:
                 task_to_return = originalGetTask(self, message)
-                if task_to_return is None:
-                    command = message.getCommand()
-                    if command in self.__class__._command_to_task_dictionary.keys():
-                        context = self._getTaskContext()
-                        context['message'] = message
-                        context['arguments_string'] = None if 'arguments_string' not in message['parameters'] else message['parameters']['arguments_string']
-                        task_to_return = self.__class__._command_to_task_dictionary[command](**context)
+            if task_to_return is None:
+                command = message.getCommand()
+                if command in self.__class__._command_to_task_dictionary.keys():
+                    context = self._getTaskContext()
+                    context['message'] = message
+                    context['arguments_string'] = None if 'arguments_string' not in message['parameters'] else message['parameters']['arguments_string']
+                    task_to_return = self.__class__._command_to_task_dictionary[command](**context)
             return task_to_return
             
         async def _runTask(self, task):

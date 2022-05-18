@@ -1,5 +1,4 @@
 from . import EventConstants
-from . import MessageStatus
 from .Environment import Environment
 from .Event import Event
 from .messages.CommandMessage import CommandMessage

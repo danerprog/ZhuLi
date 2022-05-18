@@ -1,12 +1,9 @@
-from . import MessageTemplates
 from .Bot import Bot
 from .tasks.CommandSetRequestTask import CommandSetRequestTask
 from .tasks.RestartTask import RestartTask
 from .tasks.StartTask import StartTask
 from .tasks.StopTask import StopTask
 from .tasks.StatusTask import StatusTask
-from morph import EventConstants
-from morph.ComponentProcessors import UserInputEventToTaskProcessor
 from morph.MainComponent import MainComponent
 from morph.tasks.CommandMessageToTaskProcessor import CommandMessageToTaskProcessor
 
@@ -14,13 +11,11 @@ import asyncio
 import os
 
 
-@UserInputEventToTaskProcessor({
+@CommandMessageToTaskProcessor({
     'start' : StartTask,
     'stop' : StopTask,
     'restart' : RestartTask,
-    'status' : StatusTask
-})
-@CommandMessageToTaskProcessor({
+    'status' : StatusTask,
     'command_set_request' : CommandSetRequestTask
 })
 class BatchFileManager(MainComponent):

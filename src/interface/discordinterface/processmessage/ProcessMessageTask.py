@@ -4,7 +4,7 @@ from .MessageTask import MessageTask
 from .RemoveEventTask import RemoveEventTask
 from .ShouldMessageBeProcessedTask import ShouldMessageBeProcessedTask
 from morph import EventConstants
-from morph.Event import Event
+from morph.messages.CommandMessage import CommandMessage
 
 
 class ProcessMessageTask(MessageTask):
@@ -30,7 +30,7 @@ class ProcessMessageTask(MessageTask):
             task.passResultsTo(self)
         else:
             self._reply = None
-            self._fireUserInputEvent(event)
+            self._sendCommandMessage(event)
             
     def _getTask(self, event):
         task_to_return = None
@@ -41,15 +41,15 @@ class ProcessMessageTask(MessageTask):
         elif event == "list" :
             task_to_return = ListEventTask(**self._context)
         return task_to_return
-
-    def _fireUserInputEvent(self, event):
-        self._logger.info(f"firing '{event}'.")
-        event_to_fire = Event()
-        event_to_fire['type'] = EventConstants.TYPES['user_input']
-        event_to_fire['parameters'] = {
-            'command' : event,
-            'arguments_string' : self._context['preprocessed_message'].raw().content,
-            'channel_id' : self._context['preprocessed_message'].raw().channel.id
+        
+    def _sendCommandMessage(self, command):
+        message = CommandMessage()
+        message['target'] = {
+            'component_level' : "backend"
         }
-        self._context['environment'].fireEvent(event_to_fire)
+        message.setCommand(command)
+        message.setParameter('arguments_string', self._context['preprocessed_message'].raw().content)
+        message.setParameter('channel_id', self._context['preprocessed_message'].raw().channel.id)
+        self._context['environment'].sendMessage(message)
+
 
