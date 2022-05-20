@@ -31,7 +31,7 @@ class Message:
         
     def addFlag(self, flag):
         if flag in Message.FLAG:
-            self._message['flags'].update(Message.FLAG[flag])
+            self._message['flags'].add(Message.FLAG[flag])
 
     def removeFlag(self, flag):
         self._message['flags'].discard(flag)

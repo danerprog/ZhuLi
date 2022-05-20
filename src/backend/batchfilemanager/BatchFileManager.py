@@ -1,5 +1,4 @@
 from .Bot import Bot
-from .tasks.CommandSetRequestTask import CommandSetRequestTask
 from .tasks.RestartTask import RestartTask
 from .tasks.StartTask import StartTask
 from .tasks.StopTask import StopTask
@@ -15,23 +14,15 @@ import os
     'start' : StartTask,
     'stop' : StopTask,
     'restart' : RestartTask,
-    'status' : StatusTask,
-    'command_set_request' : CommandSetRequestTask
+    'status' : StatusTask
 })
 class BatchFileManager(MainComponent):
 
     def __init__(self):
         super().__init__()
-        self._environment.getRuntimeConfiguration()['command_set'].update(['start', 'stop', 'restart', 'status'])
         self._initializeBots()
+        self._initializeRuntimeConfiguration()
 
-    def _getTaskContext(self):
-        return {
-            'environment' : self._environment,
-            'parent_logger' : self._logger,
-            'bot_list' : self._bots
-        }
-  
     def _initializeBots(self):
         self._logger.info("initializing bots...")
         self._bots = []
@@ -39,7 +30,12 @@ class BatchFileManager(MainComponent):
         for filename in os.listdir(batch_file_directory):
             if filename.endswith(".bat"):
                 self._initializeBot(batch_file_directory, filename)
-        
+                
+    def _initializeRuntimeConfiguration(self):
+        runtime_configuration = self._environment.getRuntimeConfiguration()
+        runtime_configuration['command_set'].update(['start', 'stop', 'restart', 'status'])
+        runtime_configuration['bot_list'] = self._bots
+  
     def _initializeBot(self, batch_file_directory, batch_file):
         self._logger.info("initializing bot. batch_file_directory: {}, batch_file: {}".format(
             batch_file_directory,

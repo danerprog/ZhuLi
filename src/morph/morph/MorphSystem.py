@@ -25,7 +25,7 @@ class MorphSystem(MainComponent):
         
     async def processMessage(self, message):
         message_to_process = await super().processMessage(message)
-        if message_to_process is not None:
+        if message_to_process is not None and isinstance(message_to_process, CommandMessage):
             parameters = message_to_process['parameters']
             if parameters['command'] == 'request_database':
                 self._sendDatabase(message_to_process['sender'])

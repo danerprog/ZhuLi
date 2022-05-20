@@ -35,27 +35,24 @@ class DiscordInterface(discord.Client, MainComponent):
             self._sendNotReadyToReceiveMessageToUser(message.channel.id)
         
     async def processMessage(self, received_message):
-        was_message_processed = await super().processMessage(received_message)
-        if was_message_processed:
-            parameters = received_message['parameters']
-            self._processCommand(parameters)
+        message_to_process = await super().processMessage(received_message)
+        if message_to_process is not None:
+            self._continueProcessingMessage(message_to_process)
 
-    async def sendMessageToUser(self, *args, **kwargs):
-        self._logger.info("sending message. args: {}, kwargs: {}".format(
-            str(args),
-            str(kwargs)
-        ))
-        message = kwargs["message"]
-        channel = self.get_channel(int(kwargs["channel_id"]))
-        await channel.send(embed = self._convertToEmbed(message))
+    async def sendMessageToUser(self, message_to_user, channel_id):
+        self._logger.info(f"sending message. message_to_user: {message_to_user}, channel_id: {channel_id}")
+        channel = self.get_channel(channel_id)
+        await channel.send(embed = self._convertToEmbed(message_to_user))
         
-    def _processCommand(self, parameters):
-        if parameters['command'] == 'send':
-            asyncio.create_task(self.sendMessageToUser(**parameters))
-        elif parameters['command'] == 'command_set_response':
-            self._updateCommandSet(parameters['command_set'])
-        else:
-            self._logger.info(f"Unrecognized command '{parameters['command']}'!")
+    def _continueProcessingMessage(self, message_to_process):
+        if isinstance(message_to_process, CommandMessage):
+            command = message_to_process.getCommand()
+            if command == "send":
+                asyncio.create_task(self.sendMessageToUser(
+                    message_to_process.getParameter('message'),
+                    int(message_to_process.getParameter('channel_id'))))
+            elif command == "command_set_response":
+                self._updateCommandSet(message_to_process.getParameter('command_set'))
             
     def _isComponentReadyToReceiveMessages(self):
         return False not in self._ready_flags.values()
@@ -112,11 +109,7 @@ class DiscordInterface(discord.Client, MainComponent):
             'level' : "warning",
             'fields' : self._getReadyCheckFields()
         }
-        kwargs = {
-            'message' : message,
-            'channel_id' : channel_id
-        }
-        asyncio.create_task(self.sendMessageToUser(**kwargs))
+        asyncio.create_task(self.sendMessageToUser(message, channel_id))
         
     def _getReadyCheckFields(self):
         ready_check_names = {

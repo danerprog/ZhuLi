@@ -6,7 +6,7 @@ from morph.tasks.Task import Task
 class RestartTask(Task):
     def __init__(self, **context):
         super().__init__(**context)
-        self._bot_list = context['bot_list']
+        self._bot_list = self._environment.getRuntimeConfiguration()['bot_list']
         self._bot_name = self._arguments.token(1)
         self._findBot()
         self._logger.debug(f"instantiated. bot_list: {self._bot_list}, bot_name: {self._bot_name}")

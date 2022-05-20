@@ -4,7 +4,6 @@ from .messages.EventMessage import ComponentsLoadedEvent, DatabaseStatusEvent
 from .processors.MessageProcessor import MessageProcessor
 
 
-
 class MainComponent(MessageProcessor):
 
     NEXT_COMPONENT_ID = 1
@@ -15,6 +14,7 @@ class MainComponent(MessageProcessor):
         self._initializeComponentMetadata()
         self._initializeEnvironment()
         self._environment.register(self)
+        super().__init__(self._logger)
         self._logger.info(f"Main component {self._main_component_name} initialized.")
         
     def __eq__(self, other):
@@ -31,6 +31,8 @@ class MainComponent(MessageProcessor):
         if message_to_process is not None:
             if isinstance(message, CommandMessage) and message.getCommand() == 'set_database':
                 self._onSetDatabase(message.getParameter('database'))
+            elif isinstance(message, CommandMessage) and message.getCommand() == 'command_set_request':
+                self._sendCommandSetResponseMessage(message['sender'])
             elif isinstance(message, DatabaseStatusEvent) and message.getStatus() == "online":
                 self._sendDatabaseRequest(message['sender'])
             elif isinstance(message, DatabaseStatusEvent) and message.getStatus() == "offline":
@@ -75,11 +77,18 @@ class MainComponent(MessageProcessor):
             results.append(self._component_level == dictionary['component_level'])
         self._logger.debug(f"_isDescribedByDictionary called. results: {results}")
         return len(results) > 0 and False not in results
-        
-    def _sendDatabaseRequest(self, sender):
+
+    def _sendDatabaseRequest(self, target):
         message = CommandMessage()
-        message['target'] = sender
+        message['target'] = target
         message.setCommand("request_database")
+        self._environment.sendMessage(message)
+        
+    def _sendCommandSetResponseMessage(self, target):
+        message = CommandMessage()
+        message['target'] = target
+        message.setCommand("command_set_response")
+        message.setParameter('command_set', self._environment.getRuntimeConfiguration()['command_set'])
         self._environment.sendMessage(message)
         
     def _onSetDatabase(self, new_database):
