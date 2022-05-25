@@ -1,5 +1,7 @@
 from morph.tasks.Task import Task
 
+import aiohttp
+
 
 class ArchiveUrlTask(Task):
 

@@ -23,8 +23,8 @@ class DiscordInterface(discord.Client, MainComponent):
         self._logger.debug("instantiated")
         
     async def on_ready(self):
-        self._logger.info("on_ready called")
         self._ready_flags['is_discord_client_ready'] = True
+        self._logger.debug(f"on_ready called. ready_flags: {self._ready_flags}")
  
     async def on_message(self, message):
         self._logger.info("on_message called. message.content: " + message.content)
@@ -55,6 +55,7 @@ class DiscordInterface(discord.Client, MainComponent):
                 self._updateCommandSet(message_to_process.getParameter('command_set'))
             
     def _isComponentReadyToReceiveMessages(self):
+        self._logger.debug(f"_isComponentReadyToReceiveMessages called. ready_flags: {self._ready_flags}")
         return False not in self._ready_flags.values()
 
     def _prepareOwnerPermissionsIfNeeded(self):
@@ -63,6 +64,7 @@ class DiscordInterface(discord.Client, MainComponent):
             self._permissions_manager.removeOwners()
             self._permissions_manager.addUserAsOwner(id)
         self._ready_flags['are_owner_permissions_set'] = True
+        self._logger.debug(f"_prepareOwnerPermissionsIfNeeded called. ready_flags: {self._ready_flags}")
         
     def _finishInitializationIfNotYetDone(self):
         if not self._ready_flags['is_interface_fully_initialized']:
@@ -77,6 +79,7 @@ class DiscordInterface(discord.Client, MainComponent):
                 self._logger
             )
             self._ready_flags['is_interface_fully_initialized'] = True
+        self._logger.debug(f"_finishInitializationIfNotYetDone called. ready_flags: {self._ready_flags}")
 
     def _convertToEmbed(self, message):
         embed = discord.Embed()
@@ -133,6 +136,7 @@ class DiscordInterface(discord.Client, MainComponent):
         if self._ready_flags['is_database_ready']:
             self._finishInitializationIfNotYetDone()
             self._prepareOwnerPermissionsIfNeeded()
+        self._logger.debug(f"_onSetDatabase called. new_database: {new_database}, ready_flags: {self._ready_flags}")
             
     def _onComponentsLoaded(self, loaded_components):
         super()._onComponentsLoaded(loaded_components)
