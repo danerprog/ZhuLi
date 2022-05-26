@@ -11,7 +11,7 @@ class CommandMessageToTaskProcessor:
         def __init__(self, command_to_task_dictionary, environment):
             self._command_to_task_dictionary = command_to_task_dictionary
             self._environment = environment
-            self._logger = self._environment.getLogger(self.__class__.__name__)
+            self._logger = self._environment.getLogger("CommandMessageToTaskProcessor.Implementation")
             self._logger.debug(f"instantiated. command_to_task_dictionary: {command_to_task_dictionary}")
 
         async def processMessage(self, message_to_process):
