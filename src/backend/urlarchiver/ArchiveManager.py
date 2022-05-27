@@ -23,7 +23,7 @@ class ArchiveManager:
             
     def getUrlsWithTag(self, tag):
         self._logger.debug(f"getUrlsWithTag called. tag: {tag}")
-        return self._database['urls'].query({'tag': tag})
+        return self._database['urls'].query({'tags': tag})
         
     def _doesUrlExistInDatabase(self, url):
         return self._database['urls'].count({'url': url}) > 0

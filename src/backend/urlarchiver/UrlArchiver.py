@@ -1,11 +1,13 @@
 from .ArchiveManager import ArchiveManager
 from .tasks.ArchiveUrlTask import ArchiveUrlTask
+from .tasks.SearchArchiveTask import SearchArchiveTask
 from morph.MainComponent import MainComponent
 from morph.processors.CommandMessageToTaskProcessor import CommandMessageToTaskProcessor
 
 
 @CommandMessageToTaskProcessor({
-    'archive' : ArchiveUrlTask
+    'archive' : ArchiveUrlTask,
+    'search' : SearchArchiveTask
 })
 class UrlArchiver(MainComponent):
     def __init__(self):
